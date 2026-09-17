@@ -1,0 +1,31 @@
+{% comment %}
+Bitta forma maydonini chizadi.
+
+Ishlatilishi:
+    {% include 'registry/partials/field.html' with field=form.fio %}
+    {% include 'registry/partials/field.html' with field=form.izoh wide=1 %}
+
+Belgilash oynachalari (checkbox) `.check` ko'rinishida, qolganlari esa
+yorliq + maydon + izoh/xatolik ko'rinishida chiqadi.
+{% endcomment %}
+<div class="field{% if wide %} field-wide{% endif %}{% if field.field.widget.input_type == 'checkbox' %} field-check{% endif %}{% if field.errors %} has-error{% endif %}">
+    {% if field.field.widget.input_type == 'checkbox' %}
+        <label class="check">
+            {{ field }}
+            <span>{{ field.label }}</span>
+        </label>
+    {% else %}
+        <label class="field-label" for="{{ field.id_for_label }}">
+            {{ field.label }}{% if field.field.required %}<span class="req" aria-hidden="true">*</span>{% endif %}
+        </label>
+        {{ field }}
+    {% endif %}
+
+    {% for xato in field.errors %}
+    <p class="field-error">{{ xato }}</p>
+    {% endfor %}
+
+    {% if field.help_text %}
+    <p class="field-help">{{ field.help_text }}</p>
+    {% endif %}
+</div>

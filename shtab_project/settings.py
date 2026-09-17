@@ -104,3 +104,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Ro'yxat sahifalarida bir sahifada nechta yozuv ko'rsatilishi
 PAGE_SIZE = 25
+
+# Tahrirlash sahifalari faqat tizimga kirgan foydalanuvchi uchun ochiq.
+LOGIN_URL = 'registry:login'
+LOGIN_REDIRECT_URL = 'registry:dashboard'
+LOGOUT_REDIRECT_URL = 'registry:dashboard'

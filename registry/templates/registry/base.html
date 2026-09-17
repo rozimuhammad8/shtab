@@ -1,28 +1,84 @@
-{% load static %}
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>{% block title %}Shtab ma'lumotlar bazasi{% endblock %}</title>
+    {# Sahifa chizilishidan oldin mavzuni qo'yamiz - "miltillash" bo'lmasligi uchun #}
+    <script>
+        (function () {
+            try {
+                var m = localStorage.getItem('shtab-mavzu');
+                if (m) document.documentElement.setAttribute('data-theme', m);
+            } catch (e) { /* e'tiborsiz */ }
+        })();
+    </script>
     <link rel="stylesheet" href="{% static 'registry/css/style.css' %}">
 </head>
 <body>
     <header class="site-header">
         <div class="container header-inner">
             <a href="{% url 'registry:dashboard' %}" class="brand">
-                Shtab ma'lumotlar bazasi
+                <span class="brand-mark" aria-hidden="true">SH</span>
+                <span>Shtab bazasi</span>
             </a>
+
             <nav class="main-nav">
-                <a href="{% url 'registry:dashboard' %}">Bosh sahifa</a>
-                <a href="{% url 'registry:shaxs_list' %}">Shaxslar</a>
-                <a href="{% url 'registry:mahalla_list' %}">Mahallalar</a>
-                <a href="/admin/">Admin</a>
+                <a href="{% url 'registry:dashboard' %}"
+                   {% if bolim == 'dashboard' %}class="is-active"{% endif %}>Bosh sahifa</a>
+                <a href="{% url 'registry:shaxs_list' %}"
+                   {% if bolim == 'shaxslar' %}class="is-active"{% endif %}>Shaxslar</a>
+                <a href="{% url 'registry:mahalla_list' %}"
+                   {% if bolim == 'mahallalar' %}class="is-active"{% endif %}>Mahallalar</a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'registry:malumotnoma' %}"
+                   {% if bolim == 'malumotnoma' %}class="is-active"{% endif %}>Ma'lumotnoma</a>
+                {% endif %}
+
+                <span class="nav-sep" aria-hidden="true"></span>
+
+                {% if user.is_authenticated %}
+                    <a href="/admin/">Admin</a>
+                    <form method="post" action="{% url 'registry:logout' %}" style="display:inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-ghost btn-sm">Chiqish</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'registry:login' %}">Kirish</a>
+                {% endif %}
+
+                <button type="button" class="theme-toggle" aria-label="Mavzuni almashtirish" title="Yorug'/qorong'i mavzu">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+                    </svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4.2"/>
+                        <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>
+                    </svg>
+                </button>
             </nav>
         </div>
     </header>
 
     <main class="container page">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">
+                {% if message.tags == 'success' %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M8 12.3l2.6 2.6L16 9.5"/></svg>
+                {% elif message.tags == 'error' %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 7.6v6M12 16.2v.2"/></svg>
+                {% else %}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.4M12 7.8v.2"/></svg>
+                {% endif %}
+                <span>{{ message }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
         {% block content %}{% endblock %}
     </main>
 
@@ -31,5 +87,7 @@
             <p>Andijon tumani &middot; Aholi bandligi va kambag&#39;allikka barham berish shtabi</p>
         </div>
     </footer>
+
+    <script src="{% static 'registry/js/ui.js' %}"></script>
 </body>
 </html>

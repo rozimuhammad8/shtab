@@ -3,7 +3,20 @@
 {% block title %}Bosh sahifa &middot; Shtab ma'lumotlar bazasi{% endblock %}
 
 {% block content %}
-<h1>Umumiy statistika</h1>
+<div class="page-head">
+    <div>
+        <h1>Umumiy statistika</h1>
+        <p class="subtitle">Andijon tumani shtabi reestri bo'yicha yig'ma ko'rsatkichlar</p>
+    </div>
+    {% if user.is_authenticated %}
+    <div class="page-head-actions">
+        <a class="btn" href="{% url 'registry:shaxs_create' %}">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+            Yangi shaxs
+        </a>
+    </div>
+    {% endif %}
+</div>
 
 <div class="stat-cards">
     <div class="stat-card">
@@ -22,42 +35,88 @@
         <span class="stat-number">{{ uchrashuvda_qatnashgan }}</span>
         <span class="stat-label">Uchrashuvda qatnashgan</span>
     </div>
+    <div class="stat-card">
+        <span class="stat-number">{{ xizmat_korsatilgan }}</span>
+        <span class="stat-label">Xizmat ko'rsatilgan</span>
+    </div>
 </div>
 
 <div class="two-col">
-    <section class="panel">
+    <section class="panel panel-table">
         <h2>Ijtimoiy toifalar bo'yicha</h2>
-        <table class="data-table">
-            <thead>
-                <tr><th>Toifa</th><th>Soni</th></tr>
-            </thead>
-            <tbody>
-                {% for t in toifalar %}
-                <tr>
-                    <td>{{ t.ijtimoiy_toifa|default:"Ko'rsatilmagan" }}</td>
-                    <td>{{ t.soni }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead><tr><th>Toifa</th><th class="num">Soni</th></tr></thead>
+                <tbody>
+                    {% for t in toifalar %}
+                    <tr>
+                        <td><a href="{% url 'registry:shaxs_list' %}?toifa={{ t.pk }}">{{ t.nomi }}</a></td>
+                        <td class="num">{{ t.soni }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
 
-    <section class="panel">
-        <h2>Mahallalar bo'yicha (eng ko'p shaxsli)</h2>
+    <section class="panel panel-table">
+        <h2>Eng ko'p shaxsli mahallalar</h2>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead><tr><th>Mahalla</th><th class="num">Shaxslar</th></tr></thead>
+                <tbody>
+                    {% for m in mahallalar|slice:":12" %}
+                    <tr>
+                        <td><a href="{% url 'registry:mahalla_detail' m.pk %}">{{ m.nomi }}</a></td>
+                        <td class="num">{{ m.shaxslar_soni_ann }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<section class="panel panel-table">
+    <h2>Xizmatlar: kerak bo'lgan va ko'rsatilgan</h2>
+    <div class="table-wrap">
         <table class="data-table">
             <thead>
-                <tr><th>Mahalla</th><th>Shaxslar soni</th></tr>
+                <tr>
+                    <th>Xizmat turi</th>
+                    <th class="num">Kerak bo'lgan</th>
+                    <th class="num">Ko'rsatilgan</th>
+                    <th class="num">Ajratilgan summa (mln so'm)</th>
+                </tr>
             </thead>
             <tbody>
-                {% for m in mahallalar|slice:":15" %}
+                {% for x in xizmat_yigindisi %}
                 <tr>
-                    <td><a href="{% url 'registry:mahalla_detail' m.pk %}">{{ m.nomi }}</a></td>
-                    <td>{{ m.shaxslar_soni_ann }}</td>
+                    <td>{% if x.ota_turi_id %}<span class="muted">&mdash;&nbsp;</span>{% endif %}{{ x.nomi }}</td>
+                    <td class="num">{{ x.kerakli }}</td>
+                    <td class="num">{{ x.korsatilgan }}</td>
+                    <td class="num">{{ x.summa|floatformat:"3u"|default:"—" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <a class="link-more" href="{% url 'registry:mahalla_list' %}">Barcha mahallalarni ko'rish &rarr;</a>
-    </section>
-</div>
+    </div>
+</section>
+
+<section class="panel panel-table">
+    <h2>Ijtimoiy holat belgilari bo'yicha</h2>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Belgi</th><th class="num">Shaxslar soni</th></tr></thead>
+            <tbody>
+                {% for h in ijtimoiy_holatlar %}
+                <tr>
+                    <td><a href="{% url 'registry:shaxs_list' %}?holat={{ h.pk }}">{{ h.nomi }}</a></td>
+                    <td class="num">{{ h.soni }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 {% endblock %}

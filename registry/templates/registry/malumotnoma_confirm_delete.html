@@ -1,0 +1,54 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}O'chirish &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'registry:jadval_list' jadval.kalit %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    {{ jadval.nomi }}ga qaytish
+</a>
+
+<div class="auth-wrap" style="max-width:560px;margin-top:8px">
+    <div class="panel">
+        <h1>Yozuvni o'chirish</h1>
+        <p class="subtitle" style="margin-bottom:18px">
+            {{ jadval.birlik }}: <strong>{{ obyekt }}</strong>
+        </p>
+
+        {% if bogliqlar %}
+        <div class="form-errors" style="margin-bottom:20px">
+            <strong>Diqqat - bog'liq yozuvlar bor:</strong>
+            <ul>
+                {% for b in bogliqlar %}
+                <li>
+                    {{ b.nomi }}: {{ b.soni }} ta
+                    {% if b.kaskad %}
+                        &mdash; <strong>ular ham o'chiriladi</strong>
+                    {% else %}
+                        &mdash; o'chirishga to'sqinlik qiladi
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <p class="field-help" style="margin-bottom:20px">
+            Bu yozuvga bog'langan boshqa ma'lumot yo'q.
+        </p>
+        {% endif %}
+
+        <form method="post" data-confirm="«{{ obyekt }}» yozuvini o'chirishni tasdiqlaysizmi?">
+            {% csrf_token %}
+            <div class="btn-row">
+                <button type="submit" class="btn btn-danger">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h10M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5M4.5 5.5l.6 7a.9.9 0 0 0 .9.8h4a.9.9 0 0 0 .9-.8l.6-7"/></svg>
+                    Ha, o'chirish
+                </button>
+                <a class="btn btn-secondary" href="{% url 'registry:jadval_list' jadval.kalit %}">
+                    Bekor qilish
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

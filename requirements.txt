@@ -1,3 +1,4 @@
 Django>=4.2,<5.1
 # PostgreSQL bilan ishlash uchun (ixtiyoriy, tavsiya etiladi):
 # psycopg2-binary>=2.9
+openpyxl>=3.1

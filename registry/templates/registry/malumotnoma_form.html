@@ -1,0 +1,48 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}{{ sarlavha }} &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'registry:jadval_list' jadval.kalit %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    {{ jadval.nomi }}ga qaytish
+</a>
+
+<div class="auth-wrap" style="max-width:600px;margin-top:8px">
+    <div class="panel">
+        <h1>{{ sarlavha }}</h1>
+        <p class="subtitle" style="margin-bottom:22px">
+            {% if object %}{{ object }}{% else %}{{ jadval.izoh }}{% endif %}
+        </p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                <ul>{% for xato in form.non_field_errors %}<li>{{ xato }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+                {% include 'registry/partials/field.html' with field=field %}
+            {% endfor %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5"/></svg>
+                    {{ tugma_matni }}
+                </button>
+                <a class="btn btn-secondary" href="{% url 'registry:jadval_list' jadval.kalit %}">
+                    Bekor qilish
+                </a>
+                <span class="spacer"></span>
+                {% if object %}
+                <a class="btn btn-ghost" style="color:var(--c-no-text)"
+                   href="{% url 'registry:jadval_delete' jadval.kalit object.pk %}">O'chirish</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

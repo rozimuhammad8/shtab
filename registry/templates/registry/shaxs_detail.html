@@ -3,82 +3,133 @@
 {% block title %}{{ shaxs.fio }} &middot; Shtab ma'lumotlar bazasi{% endblock %}
 
 {% block content %}
-<a class="back-link" href="{% url 'registry:shaxs_list' %}">&larr; Ro'yxatga qaytish</a>
+<a class="back-link" href="{% url 'registry:shaxs_list' %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    Ro'yxatga qaytish
+</a>
 
-<h1>{{ shaxs.fio }}</h1>
+<div class="page-head">
+    <div>
+        <h1>{{ shaxs.fio }}</h1>
+        <p class="subtitle">
+            {{ shaxs.mahalla.nomi }} &middot; oila {{ shaxs.oila.unikal_id }}
+            {% if shaxs.asosiy_arizachi %}&middot; <span class="badge badge-info">asosiy arizachi</span>{% endif %}
+            {% if shaxs.takroriy_jshshir %}&middot; <span class="badge badge-warn">JSHSHIR takroriy</span>{% endif %}
+        </p>
+    </div>
+    {% if user.is_authenticated %}
+    <div class="page-head-actions">
+        <a class="btn" href="{% url 'registry:shaxs_update' shaxs.pk %}">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.2 2.8a1.6 1.6 0 0 1 2.3 2.3L5.5 13H3v-2.5z"/></svg>
+            Tahrirlash
+        </a>
+        <a class="btn btn-secondary" href="{% url 'registry:shaxs_delete' shaxs.pk %}">O'chirish</a>
+    </div>
+    {% endif %}
+</div>
+
+{% if shaxs.fio_kiril and shaxs.fio_kiril != shaxs.fio %}
+<p class="muted" style="margin:-14px 0 20px">
+    Manba fayldagi yozuv: {{ shaxs.fio_kiril }}
+</p>
+{% endif %}
 
 <div class="two-col">
     <section class="panel">
         <h2>Shaxsiy ma'lumotlar</h2>
         <table class="detail-table">
-            <tr><th>JSHSHIR</th><td>{{ shaxs.jshshir|default:"-" }}</td></tr>
-            <tr><th>Jinsi</th><td>{{ shaxs.jinsi }}</td></tr>
-            <tr><th>Tug'ilgan sana</th><td>{{ shaxs.tugilgan_sana|default:"-" }}</td></tr>
-            <tr><th>Yoshi</th><td>{{ shaxs.yoshi|floatformat:1 }}</td></tr>
-            <tr><th>Ijtimoiy toifa</th><td>{{ shaxs.ijtimoiy_toifa }}</td></tr>
-            <tr><th>Izoh</th><td>{{ shaxs.izoh|default:"-" }}</td></tr>
-            <tr><th>Asosiy arizachi</th><td>{{ shaxs.asosiy_arizachi|yesno:"Ha,Yo'q" }}</td></tr>
-            <tr><th>Mahalla</th>
-                <td><a href="{% url 'registry:mahalla_detail' shaxs.oila.mahalla.pk %}">{{ shaxs.oila.mahalla.nomi }}</a></td>
+            <tr><th>JSHSHIR</th><td class="mono">{{ shaxs.jshshir|default:"—" }}</td></tr>
+            <tr><th>Jinsi</th><td>{{ shaxs.get_jinsi_display|default:"—" }}</td></tr>
+            <tr><th>Tug'ilgan sana</th><td>{{ shaxs.tugilgan_sana|date:"d.m.Y"|default:"—" }}</td></tr>
+            <tr><th>Yoshi</th><td>{{ shaxs.yoshi|floatformat:"1u"|default_if_none:"—" }}</td></tr>
+            <tr><th>Ijtimoiy toifa</th><td>{{ shaxs.ijtimoiy_toifa.nomi|default:"—" }}</td></tr>
+            <tr><th>Izoh (muammo toifasi)</th><td>{{ shaxs.muammo_toifasi.nomi|default:"—" }}</td></tr>
+            <tr><th>Reestrdan chiqqan</th>
+                <td>{% if shaxs.reestrdan_chiqqan %}<span class="badge badge-warn">Ha</span>{% else %}Yo'q{% endif %}</td>
             </tr>
-            <tr><th>Oila ID</th><td>{{ shaxs.oila.oila_unikal_id }}</td></tr>
+            <tr><th>Hudud</th><td>{{ shaxs.mahalla.hudud.nomi }}</td></tr>
+            <tr><th>Mahalla</th>
+                <td><a href="{% url 'registry:mahalla_detail' shaxs.mahalla.pk %}">{{ shaxs.mahalla.nomi }}</a></td>
+            </tr>
+            <tr><th>Oila ID</th><td class="mono">{{ shaxs.oila.unikal_id }}</td></tr>
+            <tr><th>Oila a'zolari soni</th><td>{{ shaxs.oila.azolari_soni|default:"—" }}</td></tr>
         </table>
     </section>
 
     <section class="panel">
         <h2>Uchrashuv va xizmatlar</h2>
         <table class="detail-table">
-            <tr><th>Uchrashuv sanasi</th><td>{{ shaxs.uchrashuv_sana|default:"-" }}</td></tr>
-            <tr><th>Uchrashuvda qatnashgan</th><td>{{ shaxs.uchrashuv_qatnashgan|yesno:"Ha,Yo'q" }}</td></tr>
-            <tr><th>Xizmat sanasi</th><td>{{ shaxs.xizmat_sana|default:"-" }}</td></tr>
-            <tr><th>Xizmat ko'rsatilgan</th><td>{{ shaxs.xizmat_qatnashgan|yesno:"Ha,Yo'q" }}</td></tr>
+            <tr><th>Uchrashuv sanasi</th><td>{{ shaxs.uchrashuv_sana|date:"d.m.Y"|default:"—" }}</td></tr>
+            <tr><th>Uchrashuvda qatnashgan</th>
+                <td>{% if shaxs.uchrashuvda_qatnashgan %}<span class="badge badge-yes">Ha</span>{% else %}<span class="badge badge-no">Yo'q</span>{% endif %}</td>
+            </tr>
+            <tr><th>Xizmat sanasi</th><td>{{ shaxs.xizmat_sana|date:"d.m.Y"|default:"—" }}</td></tr>
+            <tr><th>Xizmat ko'rsatilgan</th>
+                <td>{% if shaxs.xizmat_korsatilgan %}<span class="badge badge-yes">Ha</span>{% else %}<span class="badge badge-no">Yo'q</span>{% endif %}</td>
+            </tr>
+            <tr><th>Nima uchun murojaat qilgan</th>
+                <td>{% if shaxs.murojaat_sababi %}<span class="badge badge-info">{{ shaxs.murojaat_sababi.nomi }}</span>{% else %}&mdash;{% endif %}</td>
+            </tr>
+            {% if shaxs.murojaat_izohi %}
+            <tr><th>Murojaat mazmuni</th><td>{{ shaxs.murojaat_izohi|linebreaksbr }}</td></tr>
+            {% endif %}
+            <tr><th>Muammo aniqlanmagan</th><td>{{ shaxs.muammo_aniqlanmagan|yesno:"Ha,Yo'q" }}</td></tr>
         </table>
 
-        {% if shaxs.kerakli_xizmatlar %}
-        <h3>Kerakli xizmatlar</h3>
+        {% if kerakli_xizmatlar %}
+        <h3>Kerak bo'lgan xizmatlar</h3>
         <ul class="badge-list">
-            {% for k, v in shaxs.kerakli_xizmatlar.items %}
-            <li><span class="badge badge-info">{{ k }}: {{ v }}</span></li>
+            {% for x in kerakli_xizmatlar %}
+            <li><span class="badge badge-info">{{ x.turi.nomi }}{% if x.summa_mln %} &middot; {{ x.summa_mln|floatformat:"3u" }} mln{% endif %}</span></li>
             {% endfor %}
         </ul>
         {% endif %}
 
-        {% if shaxs.korsatilgan_xizmatlar %}
+        {% if korsatilgan_xizmatlar %}
         <h3>Ko'rsatilgan xizmatlar</h3>
         <ul class="badge-list">
-            {% for k, v in shaxs.korsatilgan_xizmatlar.items %}
-            <li><span class="badge badge-yes">{{ k }}: {{ v }}</span></li>
+            {% for x in korsatilgan_xizmatlar %}
+            <li><span class="badge badge-yes">{{ x.turi.nomi }}{% if x.summa_mln %} &middot; {{ x.summa_mln|floatformat:"3u" }} mln{% endif %}</span></li>
             {% endfor %}
         </ul>
         {% endif %}
 
-        {% if shaxs.ijtimoiy_holat_belgilari %}
+        {% if ijtimoiy_holatlar %}
         <h3>Ijtimoiy holat belgilari</h3>
         <ul class="badge-list">
-            {% for k, v in shaxs.ijtimoiy_holat_belgilari.items %}
-            <li><span class="badge">{{ k }}</span></li>
+            {% for h in ijtimoiy_holatlar %}
+            <li><span class="badge">{{ h.turi.nomi }}</span></li>
             {% endfor %}
         </ul>
+        {% endif %}
+
+        {% if not kerakli_xizmatlar and not korsatilgan_xizmatlar and not ijtimoiy_holatlar %}
+        <p class="muted" style="margin-top:14px">Xizmat va ijtimoiy holat belgilari qo'yilmagan.</p>
         {% endif %}
     </section>
 </div>
 
 {% if oila_azolari %}
-<section class="panel">
+<section class="panel panel-table">
     <h2>Oilaning boshqa a'zolari</h2>
-    <table class="data-table">
-        <thead><tr><th>F.I.O.</th><th>Jinsi</th><th>Yoshi</th><th>Toifa</th></tr></thead>
-        <tbody>
-            {% for a in oila_azolari %}
-            <tr>
-                <td><a href="{% url 'registry:shaxs_detail' a.pk %}">{{ a.fio }}</a></td>
-                <td>{{ a.jinsi }}</td>
-                <td>{{ a.yoshi|floatformat:1 }}</td>
-                <td>{{ a.ijtimoiy_toifa }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>F.I.O.</th><th>Jinsi</th><th class="num">Yoshi</th><th>Toifa</th></tr></thead>
+            <tbody>
+                {% for a in oila_azolari %}
+                <tr>
+                    <td class="cell-strong">
+                        <a href="{% url 'registry:shaxs_detail' a.pk %}">{{ a.fio }}</a>
+                        {% if a.asosiy_arizachi %} <span class="badge badge-info">asosiy arizachi</span>{% endif %}
+                    </td>
+                    <td>{{ a.get_jinsi_display|default:"—" }}</td>
+                    <td class="num">{{ a.yoshi_butun|default_if_none:"—" }}</td>
+                    <td>{{ a.ijtimoiy_toifa.nomi|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% endif %}
 {% endblock %}

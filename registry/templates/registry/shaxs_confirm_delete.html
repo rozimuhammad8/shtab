@@ -1,0 +1,46 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}Yozuvni o'chirish &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'registry:shaxs_detail' shaxs.pk %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    Yozuvga qaytish
+</a>
+
+<div class="auth-wrap" style="max-width:560px;margin-top:8px">
+    <div class="panel">
+        <h1>Yozuvni o'chirish</h1>
+        <p class="subtitle" style="margin-bottom:18px">
+            Bu amalni bekor qilish mumkin emas.
+        </p>
+
+        <div class="form-errors" style="margin-bottom:20px">
+            <strong>{{ shaxs.fio }}</strong> yozuvi va unga tegishli
+            {{ shaxs.xizmatlar.count }} ta xizmat,
+            {{ shaxs.ijtimoiy_holatlari.count }} ta ijtimoiy holat belgisi
+            butunlay o'chiriladi.
+        </div>
+
+        <table class="detail-table" style="margin-bottom:22px">
+            <tr><th>JSHSHIR</th><td class="mono">{{ shaxs.jshshir|default:"—" }}</td></tr>
+            <tr><th>Mahalla</th><td>{{ shaxs.mahalla.nomi }}</td></tr>
+            <tr><th>Oila ID</th><td class="mono">{{ shaxs.oila.unikal_id }}</td></tr>
+            <tr><th>Toifa</th><td>{{ shaxs.ijtimoiy_toifa.nomi|default:"—" }}</td></tr>
+        </table>
+
+        <form method="post" data-confirm="«{{ shaxs.fio }}» yozuvini o'chirishni tasdiqlaysizmi?">
+            {% csrf_token %}
+            <div class="btn-row">
+                <button type="submit" class="btn btn-danger">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h10M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5M4.5 5.5l.6 7a.9.9 0 0 0 .9.8h4a.9.9 0 0 0 .9-.8l.6-7"/></svg>
+                    Ha, o'chirish
+                </button>
+                <a class="btn btn-secondary" href="{% url 'registry:shaxs_detail' shaxs.pk %}">
+                    Bekor qilish
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

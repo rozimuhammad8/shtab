@@ -1,0 +1,52 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}Tizimga kirish &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <div class="panel">
+        <h1>Tizimga kirish</h1>
+        <p class="subtitle" style="margin-bottom:22px">
+            Ma'lumotlarni tahrirlash uchun kirish talab etiladi.
+        </p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                <ul>{% for xato in form.non_field_errors %}<li>{{ xato }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+
+            <div class="field{% if form.username.errors %} has-error{% endif %}">
+                <label class="field-label" for="{{ form.username.id_for_label }}">
+                    Foydalanuvchi nomi
+                </label>
+                <input type="text" name="{{ form.username.name }}"
+                       id="{{ form.username.id_for_label }}"
+                       value="{{ form.username.value|default:'' }}"
+                       autocomplete="username" autofocus required>
+                {% for xato in form.username.errors %}<p class="field-error">{{ xato }}</p>{% endfor %}
+            </div>
+
+            <div class="field{% if form.password.errors %} has-error{% endif %}">
+                <label class="field-label" for="{{ form.password.id_for_label }}">Parol</label>
+                <input type="password" name="{{ form.password.name }}"
+                       id="{{ form.password.id_for_label }}"
+                       autocomplete="current-password" required>
+                {% for xato in form.password.errors %}<p class="field-error">{{ xato }}</p>{% endfor %}
+            </div>
+
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+            <button type="submit" class="btn" style="width:100%;margin-top:6px">Kirish</button>
+        </form>
+
+        <p class="field-help" style="margin-top:18px">
+            Hisob yo'q bo'lsa, buyruq qatorida yarating:
+            <code class="mono">python manage.py createsuperuser</code>
+        </p>
+    </div>
+</div>
+{% endblock %}

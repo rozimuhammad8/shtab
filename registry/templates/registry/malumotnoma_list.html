@@ -1,0 +1,109 @@
+{% extends 'registry/base.html' %}
+{% load shtab %}
+
+{% block title %}{{ jadval.nomi }} &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'registry:malumotnoma' %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    Ma'lumotnomaga qaytish
+</a>
+
+<div class="page-head">
+    <div>
+        <h1>{{ jadval.nomi }}</h1>
+        <p class="subtitle">
+            {{ paginator.count }} ta yozuv{% if jadval.izoh %} &middot; {{ jadval.izoh }}{% endif %}
+        </p>
+    </div>
+    <div class="page-head-actions">
+        <a class="btn" href="{% url 'registry:jadval_create' jadval.kalit %}">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+            {{ jadval.birlik }} qo'shish
+        </a>
+    </div>
+</div>
+
+{% if jadval.qidiruv %}
+<form method="get" class="filter-form">
+    <div class="search-field">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/>
+        </svg>
+        <input type="search" name="q" value="{{ soragi.q }}"
+               placeholder="Qidirish..." autocomplete="off" aria-label="Qidirish">
+    </div>
+    <div class="btn-row">
+        <button type="submit" class="btn">Qidirish</button>
+        <a class="btn btn-secondary" href="{% url 'registry:jadval_list' jadval.kalit %}">Tozalash</a>
+    </div>
+</form>
+{% endif %}
+
+<div class="panel panel-table">
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                {% for atribut, sarlavha, klass in jadval.ustunlar %}
+                <th {% if 'num' in klass %}class="num"{% endif %}>{{ sarlavha }}</th>
+                {% endfor %}
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for qator in qatorlar %}
+            <tr>
+                {% for atribut, sarlavha, klass in jadval.ustunlar %}
+                <td class="{{ klass }}">
+                    {% with qiymat=qator|maydon:atribut %}
+                        {% if qiymat is True or qiymat is False %}
+                            {{ qiymat|belgi }}
+                        {% elif 'num' in klass %}
+                            {# 0 ham ko'rsatilishi kerak, shu sababli `default_if_none` #}
+                            {{ qiymat|default_if_none:"—" }}
+                        {% else %}
+                            {{ qiymat|default:"—" }}
+                        {% endif %}
+                    {% endwith %}
+                </td>
+                {% endfor %}
+                <td class="cell-actions">
+                    <a class="btn btn-ghost btn-sm"
+                       href="{% url 'registry:jadval_update' jadval.kalit qator.pk %}">Tahrirlash</a>
+                    <a class="btn btn-ghost btn-sm" style="color:var(--c-no-text)"
+                       href="{% url 'registry:jadval_delete' jadval.kalit qator.pk %}">O'chirish</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{{ jadval.ustunlar|length|add:1 }}">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+                            <circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/>
+                        </svg>
+                        <p>Yozuv topilmadi</p>
+                        <small>Yuqoridagi tugma bilan yangi yozuv qo'shishingiz mumkin.</small>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+
+{% if is_paginated %}
+<nav class="pagination" aria-label="Sahifalar">
+    {% if page_obj.has_previous %}
+        <a href="?{{ filtr_qatori }}&amp;page=1">&laquo;</a>
+        <a href="?{{ filtr_qatori }}&amp;page={{ page_obj.previous_page_number }}">Oldingi</a>
+    {% endif %}
+    <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?{{ filtr_qatori }}&amp;page={{ page_obj.next_page_number }}">Keyingi</a>
+        <a href="?{{ filtr_qatori }}&amp;page={{ page_obj.paginator.num_pages }}">&raquo;</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

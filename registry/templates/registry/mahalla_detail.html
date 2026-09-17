@@ -3,27 +3,72 @@
 {% block title %}{{ mahalla.nomi }} &middot; Shtab ma'lumotlar bazasi{% endblock %}
 
 {% block content %}
-<a class="back-link" href="{% url 'registry:mahalla_list' %}">&larr; Mahallalar ro'yxatiga qaytish</a>
+<a class="back-link" href="{% url 'registry:mahalla_list' %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    Mahallalar ro'yxatiga qaytish
+</a>
 
-<h1>{{ mahalla.nomi }}</h1>
-<p class="subtitle">{{ mahalla.hudud }} &middot; Kod: {{ mahalla.kodi }} &middot; {{ shaxslar|length }} ta shaxs</p>
-
-<div class="table-wrap">
-    <table class="data-table">
-        <thead>
-            <tr><th>F.I.O.</th><th>JSHSHIR</th><th>Jinsi</th><th>Yoshi</th><th>Toifa</th></tr>
-        </thead>
-        <tbody>
-            {% for s in shaxslar %}
-            <tr>
-                <td><a href="{% url 'registry:shaxs_detail' s.pk %}">{{ s.fio }}</a></td>
-                <td>{{ s.jshshir|default:"-" }}</td>
-                <td>{{ s.jinsi }}</td>
-                <td>{{ s.yoshi|floatformat:1 }}</td>
-                <td>{{ s.ijtimoiy_toifa }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="page-head">
+    <div>
+        <h1>{{ mahalla.nomi }}</h1>
+        <p class="subtitle">
+            {{ mahalla.hudud.nomi }} &middot; kod {{ mahalla.kodi }} &middot;
+            {{ oilalar_soni }} ta oila &middot; {{ shaxslar|length }} ta shaxs
+            {% if mahalla.nomi_kiril %}&middot; manbada: {{ mahalla.nomi_kiril }}{% endif %}
+        </p>
+    </div>
+    {% if user.is_authenticated %}
+    <div class="page-head-actions">
+        <a class="btn btn-secondary" href="{% url 'registry:mahalla_update' mahalla.pk %}">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.2 2.8a1.6 1.6 0 0 1 2.3 2.3L5.5 13H3v-2.5z"/></svg>
+            Nomini tahrirlash
+        </a>
+    </div>
+    {% endif %}
 </div>
+
+{% if toifalar %}
+<section class="panel">
+    <h2>Ijtimoiy toifalar bo'yicha</h2>
+    <ul class="badge-list">
+        {% for t in toifalar %}
+        <li>
+            <a href="{% url 'registry:shaxs_list' %}?mahalla={{ mahalla.pk }}&amp;toifa={{ t.pk }}">
+                <span class="badge badge-info">{{ t.nomi }} &middot; {{ t.soni }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+<section class="panel panel-table">
+    <h2>Shaxslar</h2>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>F.I.O.</th>
+                    <th>JSHSHIR</th>
+                    <th>Jinsi</th>
+                    <th class="num">Yoshi</th>
+                    <th>Oila ID</th>
+                    <th>Toifa</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in shaxslar %}
+                <tr>
+                    <td class="cell-strong"><a href="{% url 'registry:shaxs_detail' s.pk %}">{{ s.fio }}</a></td>
+                    <td class="mono">{{ s.jshshir|default:"—" }}</td>
+                    <td>{{ s.get_jinsi_display|default:"—" }}</td>
+                    <td class="num">{{ s.yoshi_butun|default_if_none:"—" }}</td>
+                    <td class="mono">{{ s.oila.unikal_id }}</td>
+                    <td>{{ s.ijtimoiy_toifa.nomi|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 {% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}{{ mahalla.nomi }} - tahrirlash &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'registry:mahalla_detail' mahalla.pk %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    Mahallaga qaytish
+</a>
+
+<div class="auth-wrap" style="max-width:560px;margin-top:8px">
+    <div class="panel">
+        <h1>Mahallani tahrirlash</h1>
+        <p class="subtitle" style="margin-bottom:22px">
+            Manba fayldagi MFY nomlari o'zbek kirill alifbosining
+            Q/G&#39;/O&#39; harflaridan foydalanmasdan yozilgan, shu sababli
+            lotin yozuvidagi nomni shu yerda tuzatish mumkin.
+        </p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                <ul>{% for xato in form.non_field_errors %}<li>{{ xato }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+
+            {% include 'registry/partials/field.html' with field=form.nomi %}
+            {% include 'registry/partials/field.html' with field=form.nomi_kiril %}
+            {% include 'registry/partials/field.html' with field=form.kodi %}
+            {% include 'registry/partials/field.html' with field=form.hudud %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5"/></svg>
+                    Saqlash
+                </button>
+                <a class="btn btn-secondary" href="{% url 'registry:mahalla_detail' mahalla.pk %}">
+                    Bekor qilish
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

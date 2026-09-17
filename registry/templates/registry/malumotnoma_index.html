@@ -1,0 +1,42 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}Ma'lumotnoma &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Ma'lumotnoma</h1>
+        <p class="subtitle">
+            Bazadagi barcha jadvallar - yozuv qo'shish, tahrirlash va o'chirish
+        </p>
+    </div>
+    <div class="page-head-actions">
+        <a class="btn" href="{% url 'registry:shaxs_create' %}">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+            Yangi shaxs
+        </a>
+    </div>
+</div>
+
+<div class="card-grid">
+    <a class="ref-card" href="{% url 'registry:shaxs_list' %}">
+        <div class="ref-card-head">
+            <h2>Shaxslar</h2>
+            <span class="badge badge-info">{{ shaxslar_soni }}</span>
+        </div>
+        <p>Reestrdagi jismoniy shaxslar. Qidiruv, filtrlar va to'liq tahrirlash.</p>
+        <span class="ref-card-link">Ro'yxatni ochish &rarr;</span>
+    </a>
+
+    {% for j in jadvallar %}
+    <a class="ref-card" href="{% url 'registry:jadval_list' j.jadval.kalit %}">
+        <div class="ref-card-head">
+            <h2>{{ j.jadval.nomi }}</h2>
+            <span class="badge">{{ j.soni }}</span>
+        </div>
+        <p>{{ j.jadval.izoh }}</p>
+        <span class="ref-card-link">Ro'yxatni ochish &rarr;</span>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

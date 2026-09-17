@@ -1,0 +1,187 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}{{ sarlavha }} &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+{% if shaxs %}
+<a class="back-link" href="{% url 'registry:shaxs_detail' shaxs.pk %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    Yozuvga qaytish
+</a>
+{% else %}
+<a class="back-link" href="{% url 'registry:shaxs_list' %}">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
+    Ro'yxatga qaytish
+</a>
+{% endif %}
+
+<div class="page-head">
+    <div>
+        <h1>{{ sarlavha }}</h1>
+        <p class="subtitle">
+            {% if shaxs %}{{ shaxs.fio }}{% else %}Yangi yozuv ma'lumotlarini kiriting{% endif %}
+        </p>
+    </div>
+</div>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors or xizmatlar.non_form_errors %}
+    <div class="form-errors">
+        <strong>Formani saqlash mumkin emas:</strong>
+        <ul>
+            {% for xato in form.non_field_errors %}<li>{{ xato }}</li>{% endfor %}
+            {% for xato in xizmatlar.non_form_errors %}<li>{{ xato }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <div class="form-section">
+            <h3>Shaxsiy ma'lumotlar</h3>
+            <div class="form-grid">
+                {% include 'registry/partials/field.html' with field=form.fio wide=1 %}
+                {% include 'registry/partials/field.html' with field=form.jshshir %}
+                {% include 'registry/partials/field.html' with field=form.jinsi %}
+                {% include 'registry/partials/field.html' with field=form.tugilgan_sana %}
+                {% include 'registry/partials/field.html' with field=form.yoshi %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Manzil va oila</h3>
+            <div class="form-grid">
+                {% include 'registry/partials/field.html' with field=form.mahalla %}
+                {% include 'registry/partials/field.html' with field=form.oila %}
+                {% include 'registry/partials/field.html' with field=form.asosiy_arizachi %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Ijtimoiy reestr</h3>
+            <div class="form-grid">
+                {% include 'registry/partials/field.html' with field=form.ijtimoiy_toifa %}
+                {% include 'registry/partials/field.html' with field=form.muammo_toifasi %}
+                {% include 'registry/partials/field.html' with field=form.reestrdan_chiqqan %}
+                {% include 'registry/partials/field.html' with field=form.ijtimoiy_holatlar wide=1 %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Murojaat</h3>
+            <div class="form-grid">
+                {% include 'registry/partials/field.html' with field=form.murojaat_sababi %}
+                {% include 'registry/partials/field.html' with field=form.murojaat_izohi wide=1 %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Uchrashuv va xizmat ko'rsatish</h3>
+            <div class="form-grid">
+                {% include 'registry/partials/field.html' with field=form.uchrashuv_sana %}
+                {% include 'registry/partials/field.html' with field=form.uchrashuvda_qatnashgan %}
+                {% include 'registry/partials/field.html' with field=form.xizmat_sana %}
+                {% include 'registry/partials/field.html' with field=form.xizmat_korsatilgan %}
+            </div>
+        </div>
+
+        <div class="form-section" style="margin-bottom:0">
+            <h3>Aniqlangan muammo</h3>
+            <div class="form-grid">
+                {% include 'registry/partials/field.html' with field=form.muammo_aniqlanmagan %}
+            </div>
+        </div>
+    </div>
+
+    {# ---------------- Xizmatlar (inline formset) ---------------- #}
+    <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <h2 style="margin:0">Xizmatlar</h2>
+            <button type="button" class="btn btn-secondary btn-sm" data-formset-add="{{ xizmatlar.prefix }}">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+                Xizmat qo'shish
+            </button>
+        </div>
+
+        {{ xizmatlar.management_form }}
+
+        <div class="formset" data-formset="{{ xizmatlar.prefix }}">
+            <div class="formset-head">
+                <span>Xizmat turi</span>
+                <span>Holat</span>
+                <span>Soni</span>
+                <span>Summa (mln)</span>
+                <span></span>
+            </div>
+
+            <div data-formset-rows>
+                {% for xizmat_form in xizmatlar %}
+                <div class="formset-row{% if xizmat_form.DELETE.value %} is-deleted{% endif %}">
+                    {% for yashirin in xizmat_form.hidden_fields %}{{ yashirin }}{% endfor %}
+                    <div class="field{% if xizmat_form.turi.errors %} has-error{% endif %}">
+                        {{ xizmat_form.turi }}
+                        {% for xato in xizmat_form.turi.errors %}<p class="field-error">{{ xato }}</p>{% endfor %}
+                    </div>
+                    <div class="field{% if xizmat_form.holat.errors %} has-error{% endif %}">
+                        {{ xizmat_form.holat }}
+                        {% for xato in xizmat_form.holat.errors %}<p class="field-error">{{ xato }}</p>{% endfor %}
+                    </div>
+                    <div class="field">{{ xizmat_form.soni }}</div>
+                    <div class="field">{{ xizmat_form.summa_mln }}</div>
+                    <div style="display:flex;justify-content:center">
+                        <label class="sr-only" for="{{ xizmat_form.DELETE.id_for_label }}">O'chirish</label>
+                        {{ xizmat_form.DELETE }}
+                        <button type="button" class="row-remove" title="Qatorni o'chirish belgilash">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h10M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5M4.5 5.5l.6 7a.9.9 0 0 0 .9.8h4a.9.9 0 0 0 .9-.8l.6-7"/></svg>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state" style="padding:30px 20px">
+                    <p>Xizmat yozuvi yo'q</p>
+                    <small>Yuqoridagi «Xizmat qo'shish» tugmasi bilan qo'shing.</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <p class="field-help" style="margin-top:10px">
+            «O'chirish» tugmasi bazadagi qatorni saqlashdan keyin o'chiradi -
+            belgilangan qator xiralashib turadi. Tugmani yana bossangiz, bekor qilinadi.
+        </p>
+
+        {# JavaScript yangi qator qo'shishda shu namunadan foydalanadi #}
+        <template data-formset-empty>
+            <div class="formset-row">
+                {% for yashirin in xizmatlar.empty_form.hidden_fields %}{{ yashirin }}{% endfor %}
+                <div class="field">{{ xizmatlar.empty_form.turi }}</div>
+                <div class="field">{{ xizmatlar.empty_form.holat }}</div>
+                <div class="field">{{ xizmatlar.empty_form.soni }}</div>
+                <div class="field">{{ xizmatlar.empty_form.summa_mln }}</div>
+                <div style="display:flex;justify-content:center">
+                    <button type="button" class="row-remove" title="Qatorni olib tashlash">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h10M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5M4.5 5.5l.6 7a.9.9 0 0 0 .9.8h4a.9.9 0 0 0 .9-.8l.6-7"/></svg>
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5"/></svg>
+            {{ tugma_matni }}
+        </button>
+        <a class="btn btn-secondary"
+           href="{% if shaxs %}{% url 'registry:shaxs_detail' shaxs.pk %}{% else %}{% url 'registry:shaxs_list' %}{% endif %}">
+            Bekor qilish
+        </a>
+        <span class="spacer"></span>
+        {% if shaxs %}
+        <a class="btn btn-ghost" href="{% url 'registry:shaxs_delete' shaxs.pk %}"
+           style="color:var(--c-no-text)">O'chirish</a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}
