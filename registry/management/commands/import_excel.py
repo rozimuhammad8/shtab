@@ -50,7 +50,7 @@ U_UCHRASHUV = 16
 U_XIZMAT_SANA = 17
 U_XIZMAT = 18
 U_MUROJAAT_MAZMUNI = 43   # "Бошқа муаммоли оилалар (Изоҳ)" - fuqaro nima so'ragani
-U_MUAMMO_YOQ = 44
+U_MUAMMO_YOQ = 44        # "Учрашувда муаммо аниқланмаган оила" (teskari mantiq)
 
 # Xizmat turlari katalogi.
 # (kod, kerakli_ustun, kerakli_summa_ustuni, korsatilgan_ustun,
@@ -126,28 +126,108 @@ IJTIMOIY_HOLAT_KATALOGI = [
 
 JINSI_MOSLIGI = {'эркак': Shaxs.ERKAK, 'аёл': Shaxs.AYOL}
 
-# "Nima uchun murojaat qilgan" - manba faylda alohida ustun yo'q, lekin
-# "kerakli xizmatlar" ustunlari (19-42) fuqaro nima so'raganini ko'rsatadi.
-# Shu sababli murojaat sababi kerakli xizmat turidan keltirib chiqariladi.
-# Bir shaxsda bir nechta kerakli xizmat bo'lishi mumkin, shuning uchun
-# ro'yxat tartibi = ustuvorlik: eng aniq sabab yuqorida turadi.
-SABAB_USTUVORLIGI = [
-    ('sogligini_tiklash',       'Tibbiy yordam'),
-    ('bogcha_vaucheri',         "Farzandni bog'chaga joylashtirish"),
-    ('aliment',                 'Aliment undirish'),
-    ('kadastr',                 'Hujjat rasmiylashtirish'),
-    ('kasb_hunarga_oqitish',    "Kasb-hunarga o'qitish"),
-    ('imtiyozli_kredit',        'Imtiyozli kredit'),
-    ('ssuda',                   'Imtiyozli kredit'),
-    ('yoshlar_daftari',         'Subsidiya yoki ijtimoiy nafaqa'),
-    ('ayollar_daftari',         'Subsidiya yoki ijtimoiy nafaqa'),
-    ('sahovat_jamgarmasi',      'Homiylik yordami'),
-    ('infratuzilma_jamgarmasi', 'Subsidiya yoki ijtimoiy nafaqa'),
-    ('ijtimoiy_daftarlar',      'Subsidiya yoki ijtimoiy nafaqa'),
-    ('doimiy_ish',              "Ish bilan ta'minlash"),
-    ('tadbirkorlik',            "Ish bilan ta'minlash"),
-    ('ozini_ozi_band_qilish',   "Ish bilan ta'minlash"),
-    ('migratsiya',              "Ish bilan ta'minlash"),
+# "Nima uchun murojaat qilgan" katalogi.
+#
+# Manba faylda buning uchun alohida ustun yo'q, lekin ma'lumot ikki joyda bor:
+#   * "kerakli xizmatlar" ustunlari (19-42) - fuqaroga qanday xizmat kerak;
+#   * 43-ustun ("Бошқа муаммоли оилалар (Изоҳ)") - erkin matn: fuqaro nima
+#     so'ragani ("Uy joyini ta'mirlash", "Nogironlik aravachasi olish"...).
+#
+# Har bir yozuv: (nomi, tavsifi, tartib, xizmat_kodlari, kalit_sozlar)
+#   xizmat_kodlari - shu sabab qaysi `XizmatTuri.kod` larga mos keladi;
+#   kalit_sozlar   - 43-ustun matnida qidiriladigan (kichik harfdagi) bo'laklar.
+# Bir shaxsga bir nechta sabab tegishli bo'lishi mumkin - hammasi yoziladi.
+SABAB_KATALOGI = [
+    ("Ish bilan ta'minlash", 'Doimiy ish yoki bandlik masalasi', 10,
+     ['doimiy_ish', 'ozini_ozi_band_qilish'],
+     ['ish joyi', 'ish xakki', 'ish haqi', 'bandlik', 'ishga joylash',
+      'stavka', 'ishlash istagi', 'uyushmasidan']),
+
+    ("Tadbirkorlikni yo'lga qo'yish", 'Oilaviy tadbirkorlik, savdo', 20,
+     ['tadbirkorlik'], ['dukon', 'savdo']),
+
+    ('Mehnat migratsiyasi', "Xorijga ishga jo'natish", 30,
+     ['migratsiya'], []),
+
+    ("Kasb-hunarga o'qitish", 'Qayta tayyorlov va malaka oshirish', 40,
+     ['kasb_hunarga_oqitish'], ['sertifikat', 'xamshira']),
+
+    ('Imtiyozli kredit yoki ssuda', 'Kredit/ssuda ajratish masalasi', 50,
+     ['imtiyozli_kredit', 'ssuda'], ['kredit', 'keredit', 'krelit']),
+
+    ("Ijtimoiy daftarlardan mablag'", 'Subsidiya va ijtimoiy nafaqa', 60,
+     ['ijtimoiy_daftarlar', 'yoshlar_daftari', 'ayollar_daftari',
+      'infratuzilma_jamgarmasi'],
+     ['subsidiya', 'moddiy', "jamg'arma", 'jamgarma', 'yangi kun']),
+
+    ('Homiylik yordami', "Homiylar hisobidan ko'rsatiladigan yordam", 70,
+     ['sahovat_jamgarmasi', 'homiylik'],
+     ['xomiylik', 'homiylik', 'xomiy', 'homiy', 'tikuv moshina',
+      'tikuv mashina', 'balon']),
+
+    ('Tibbiy yordam va reabilitatsiya', "Sog'lig'ini tiklash, davolanish", 80,
+     ['sogligini_tiklash'],
+     ['davola', 'davolan', 'operattsiya', 'operatsiya', 'poliklinika',
+      'riabilatsiya', 'reabilitatsiya', 'eshitish', 'moslama', 'miyyasi',
+      'shifoxona', 'tibbiy', 'dori', 'emlash', 'kassallik', 'kasallik']),
+
+    ('Nogironlik masalalari', 'Nogironlik guruhi, aravacha, jihozlar', 90,
+     [], ['nogiron', 'nogirron', 'aravacha', 'avarachasi', 'guruxiga',
+          'gruxiga']),
+
+    ("Farzandni bog'chaga joylashtirish", 'Vaucher yoki joy masalasi', 100,
+     ['bogcha_vaucheri'], ["bog'cha", 'bogcha', 'boqcha', 'ptpk']),
+
+    ("Ta'lim, kurs va to'garaklar", "Maktab, kollej, kurs va to'garaklar", 110,
+     [],
+     ['kurs', 'kurrs', "to'garak", 'tugrak', 'togarak', "o'qit", 'ukitish',
+      'oqitish', 'maktab', 'talim', "ta'lim", 'logoped', 'dual', 'til ',
+      'ingliz', 'rus tili', 'ximiya', 'matematika', 'musiqa', 'kontrak',
+      'kantrakt', "o'quv", 'oquv', 'ukuv', 'temuriylar', 'universitet',
+      'imkoniyatlar olami']),
+
+    ('Hujjat rasmiylashtirish', 'Kadastr, pasport, guvohnoma va h.k.', 120,
+     ['kadastr'],
+     ['pasport', 'xujjat', 'hujjat', 'rasmiylashtir', 'nikox', 'nikoh',
+      'order', 'guvoxnoma', 'metirka', 'vaucher', 'xarbiy', 'armiya']),
+
+    ('Aliment undirish', 'Aliment qarzdorligini undirib berish', 130,
+     ['aliment'], []),
+
+    ("Uy-joy va ta'mirlash", "Uy-joy olish yoki ta'mirlash masalasi", 140,
+     [],
+     ['uy joy', 'uy-joy', 'uyjoy', "ta'mir", 'tamir', 'shifer', 'devor',
+      'uyini', 'uy olish', 'uyidan', 'uy ', 'uyi ', 'darvoza', 'xonadon']),
+
+    ('Kommunal va infratuzilma', "Gaz, elektr, suv, yo'l masalalari", 150,
+     [],
+     ['gaz', 'elektor', 'elektr', 'qarzdorlik', 'karzdorlik', 'kommunal',
+      "shag'al", 'shagal', "ko'chasi", 'kochasi', 'suv', 'isitish',
+      'internet', "ko'mir", "yoqilg'", 'musir', 'tozalash']),
+
+    ('Yuridik yordam', 'Sud, soliq, huquqiy maslahat', 160,
+     [],
+     ['yuridik', 'maslaxat olish', 'prokuror', 'sud', 'qabuliga', 'jarima',
+      "solig'", 'solig', 'ozodlik', 'noqonuniy', 'er sot', 'oldisotti',
+      'avtoshina', 'mashinasini', 'yatt']),
+
+    ('Parvarish va qarovchilik', "Oila a'zosini parvarish qilish", 170,
+     [],
+     ['qarovchi', 'karovchi', 'karab turish', 'qarab turish', 'parvarish',
+      'karab turuvchi']),
+
+    ('Oilaviy nizo va psixologik yordam', 'Oilaviy kelishmovchilik', 180,
+     [], ['psixolog', 'notinch', 'yarash', 'kelishmovchilik',
+          'oilasini tiklash']),
+
+    ('Pensiya masalasi', 'Pensiyani qayta hisoblash va h.k.', 190,
+     [], ['pensiya']),
+
+    ('Meros va ulush masalasi', 'Mulkdan ulush, meros', 200,
+     [], ['ulush', 'meros']),
+
+    ('Bolani asrab olish va vasiylik', 'Vasiylik, asrab olish', 210,
+     [], ['asrab ol', 'vasiylik']),
 ]
 
 
@@ -328,7 +408,31 @@ class Command(BaseCommand):
                 },
             )
             holat_turlari[kod] = turi
-        return xizmat_turlari, holat_turlari
+
+        # Murojaat sabablari katalogi
+        sabablar = {}
+        for nomi, tavsifi, tartib, _xiz, _kal in SABAB_KATALOGI:
+            sabab, _ = MurojaatSababi.objects.update_or_create(
+                nomi=nomi,
+                defaults={'tavsifi': tavsifi, 'tartib': tartib, 'faol': True},
+            )
+            sabablar[nomi] = sabab
+
+        # Katalogda yo'q va hech bir shaxsga bog'lanmagan sabablarni
+        # olib tashlaymiz (masalan katalog nomi o'zgargandan keyin qolganlar).
+        ortiqcha = (
+            MurojaatSababi.objects
+            .exclude(nomi__in=sabablar)
+            .filter(shaxslar__isnull=True)
+        )
+        ochirilgan = ortiqcha.count()
+        if ochirilgan:
+            ortiqcha.delete()
+            self.stdout.write(
+                f"  {ochirilgan} ta ishlatilmagan murojaat sababi o'chirildi"
+            )
+
+        return xizmat_turlari, holat_turlari, sabablar
 
     # -- asosiy ish ---------------------------------------------------------
     def handle(self, *args, **options):
@@ -367,16 +471,19 @@ class Command(BaseCommand):
             MuammoToifasi.objects.all().delete()
 
         with transaction.atomic():
-            xizmat_turlari, holat_turlari = self._lugatlarni_yarat(sarlavhalar)
+            xizmat_turlari, holat_turlari, sabablar = (
+                self._lugatlarni_yarat(sarlavhalar)
+            )
             hisobot = self._qatorlarni_yukla(
-                qatorlar, xizmat_turlari, holat_turlari,
+                qatorlar, xizmat_turlari, holat_turlari, sabablar,
             )
 
         self.stdout.write(self.style.SUCCESS("\nImport tugadi:"))
         for kalit, qiymat in hisobot.items():
             self.stdout.write(f"  {kalit}: {qiymat}")
 
-    def _qatorlarni_yukla(self, qatorlar, xizmat_turlari, holat_turlari):
+    def _qatorlarni_yukla(self, qatorlar, xizmat_turlari, holat_turlari,
+                          sabablar):
         hududlar, mahallalar, toifalar, muammolar = {}, {}, {}, {}
         oilalar = {}
 
@@ -475,8 +582,8 @@ class Command(BaseCommand):
                 uchrashuvda_qatnashgan=_bayroq(qator[U_UCHRASHUV]),
                 xizmat_sana=_sana(qator[U_XIZMAT_SANA]),
                 xizmat_korsatilgan=_bayroq(qator[U_XIZMAT]),
-                murojaat_izohi=tozala(qator[U_MUROJAAT_MAZMUNI]),
-                muammo_aniqlanmagan=_bayroq(qator[U_MUAMMO_YOQ]),
+                # 44-ustun "muammo aniqlanMAGAN" degani - teskarisiga olamiz
+                muammo_aniqlangan=not _bayroq(qator[U_MUAMMO_YOQ]),
             ))
         Shaxs.objects.bulk_create(shaxs_yozuvlari, batch_size=TOPLAM)
         self.stdout.write(f"  {len(shaxs_yozuvlari)} shaxs yozildi")
@@ -526,52 +633,24 @@ class Command(BaseCommand):
             f"  {len(xizmatlar)} xizmat, {len(holatlar)} ijtimoiy holat yozildi"
         )
 
-        # --- 4-qadam: tezkor hisoblar va murojaat sababi ---
-        # Murojaat sababi kerakli xizmat turidan keltirib chiqariladi
-        # (`SABAB_USTUVORLIGI` tartibida - eng aniq sabab birinchi bo'ladi).
-        sabab_obyektlari = {
-            s.nomi: s for s in MurojaatSababi.objects.all()
-        }
-        kerakli_kodlar = {}
-        for xizmat in xizmatlar:
-            if xizmat.holat == Xizmat.KERAKLI:
-                kerakli_kodlar.setdefault(xizmat.shaxs.pk, set()).add(xizmat.turi.kod)
-
-        sabab_sanogi = 0
+        # --- 4-qadam: tezkor hisoblar ---
         yangilanadi = []
         for shaxs in shaxs_yozuvlari:
             kerakli = kerakli_sanoq.get(shaxs.pk, 0)
             korsatilgan = korsatilgan_sanoq.get(shaxs.pk, 0)
-            ozgardi = False
-
             if kerakli or korsatilgan:
                 shaxs.kerakli_xizmatlar_soni = kerakli
                 shaxs.korsatilgan_xizmatlar_soni = korsatilgan
-                ozgardi = True
-
-            kodlar = kerakli_kodlar.get(shaxs.pk)
-            if kodlar:
-                for kod, sabab_nomi in SABAB_USTUVORLIGI:
-                    if kod in kodlar and sabab_nomi in sabab_obyektlari:
-                        shaxs.murojaat_sababi = sabab_obyektlari[sabab_nomi]
-                        sabab_sanogi += 1
-                        ozgardi = True
-                        break
-
-            if ozgardi:
                 yangilanadi.append(shaxs)
-
         Shaxs.objects.bulk_update(
             yangilanadi,
-            [
-                'kerakli_xizmatlar_soni', 'korsatilgan_xizmatlar_soni',
-                'murojaat_sababi',
-            ],
+            ['kerakli_xizmatlar_soni', 'korsatilgan_xizmatlar_soni'],
             batch_size=TOPLAM,
         )
-        self.stdout.write(
-            f"  {sabab_sanogi} shaxsga murojaat sababi qo'yildi, "
-            f"{Shaxs.objects.exclude(murojaat_izohi='').count()} ta murojaat mazmuni"
+
+        # --- 5-qadam: murojaat sabablari (ko'p-ko'p bog'lanish) ---
+        sabab_bogliklari = self._sabablarni_bogla(
+            qatorlar, shaxs_yozuvlari, xizmatlar, sabablar,
         )
 
         return {
@@ -585,11 +664,87 @@ class Command(BaseCommand):
             'Ijtimoiy holat yozuvlari': ShaxsIjtimoiyHolat.objects.count(),
             'Ijtimoiy toifalar': IjtimoiyToifa.objects.count(),
             'Muammo toifalari': MuammoToifasi.objects.count(),
-            "Murojaat sababi qo'yilgan shaxslar":
-                Shaxs.objects.filter(murojaat_sababi__isnull=False).count(),
-            "Murojaat mazmuni yozilgan shaxslar":
-                Shaxs.objects.exclude(murojaat_izohi='').count(),
+            "Murojaat sabablari (lug'at)": MurojaatSababi.objects.count(),
+            'Murojaat sababi bor shaxslar':
+                Shaxs.objects.filter(murojaat_sabablari__isnull=False)
+                .distinct().count(),
+            "Murojaat sababi bog'lanishlari": sabab_bogliklari,
             "JSHSHIR nuqsonli (bo'sh qoldirildi)": buzuq_jshshir,
             "JSHSHIR takrorlangan (belgilandi)": len(takrorlangan_jshshir),
             "Oilasiz qatorlar (o'tkazib yuborildi)": oilasiz,
         }
+
+    def _sabablarni_bogla(self, qatorlar, shaxs_yozuvlari, xizmatlar, sabablar):
+        """Har bir shaxsga tegishli murojaat sabablarini bog'laydi.
+
+        Ikki manbadan yig'iladi:
+          * kerak bo'lgan xizmat turlari (`SABAB_KATALOGI` dagi xizmat kodlari);
+          * 43-ustundagi erkin matn (kalit so'zlar bo'yicha).
+
+        Bir shaxsda bir nechta sabab bo'lishi mumkin - hammasi yoziladi.
+        """
+        # Kod/kalit -> sabab nomlari xaritalari
+        kod_xaritasi = {}
+        kalit_xaritasi = []
+        for nomi, _tavsifi, _tartib, xizmat_kodlari, kalit_sozlar in SABAB_KATALOGI:
+            for kod in xizmat_kodlari:
+                kod_xaritasi.setdefault(kod, []).append(nomi)
+            for kalit in kalit_sozlar:
+                kalit_xaritasi.append((kalit, nomi))
+
+        # Shaxs -> kerak bo'lgan xizmat kodlari
+        kerakli_kodlar = {}
+        for xizmat in xizmatlar:
+            if xizmat.holat == Xizmat.KERAKLI:
+                kerakli_kodlar.setdefault(xizmat.shaxs.pk, set()).add(
+                    xizmat.turi.kod
+                )
+
+        # 43-ustun matnini bir marta tahlil qilib keshlaymiz (matnlar takrorlanadi).
+        matn_keshi = {}
+
+        def matndan_sabablar(matn):
+            if matn not in matn_keshi:
+                past = matn.lower()
+                matn_keshi[matn] = {
+                    nomi for kalit, nomi in kalit_xaritasi if kalit in past
+                }
+            return matn_keshi[matn]
+
+        Bogliq = Shaxs.murojaat_sabablari.through
+        bogliqlar = []
+        matndan_sanoq = 0
+        xizmatdan_sanoq = 0
+
+        for qator, shaxs in zip(qatorlar, shaxs_yozuvlari):
+            nomlar = set()
+
+            for kod in kerakli_kodlar.get(shaxs.pk, ()):
+                nomlar.update(kod_xaritasi.get(kod, ()))
+            if nomlar:
+                xizmatdan_sanoq += 1
+
+            matn = tozala(qator[U_MUROJAAT_MAZMUNI])
+            if matn:
+                matndan = matndan_sabablar(matn)
+                if matndan:
+                    matndan_sanoq += 1
+                nomlar.update(matndan)
+
+            for nomi in nomlar:
+                sabab = sabablar.get(nomi)
+                if sabab is not None:
+                    bogliqlar.append(Bogliq(
+                        shaxs_id=shaxs.pk, murojaatsababi_id=sabab.pk,
+                    ))
+
+        Bogliq.objects.bulk_create(
+            bogliqlar, batch_size=TOPLAM, ignore_conflicts=True,
+        )
+        self.stdout.write(
+            f"  {len(bogliqlar)} murojaat sababi bog'lanishi yozildi "
+            f"(kerakli xizmatdan: {xizmatdan_sanoq} shaxs, "
+            f"43-ustun matnidan: {matndan_sanoq} shaxs)"
+        )
+        return len(bogliqlar)
+

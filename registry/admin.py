@@ -64,15 +64,17 @@ class ShaxsAdmin(admin.ModelAdmin):
         'uchrashuvda_qatnashgan', 'xizmat_korsatilgan',
     )
     list_filter = (
-        'jinsi', 'ijtimoiy_toifa', 'muammo_toifasi', 'murojaat_sababi',
+        'jinsi', 'ijtimoiy_toifa', 'muammo_toifasi', 'murojaat_sabablari',
         'uchrashuvda_qatnashgan', 'xizmat_korsatilgan', 'asosiy_arizachi',
-        'reestrdan_chiqqan', 'takroriy_jshshir', 'mahalla__hudud',
+        'reestrdan_chiqqan', 'muammo_aniqlangan', 'takroriy_jshshir',
+        'mahalla__hudud',
     )
     search_fields = ('fio', 'fio_kiril', 'jshshir', 'oila__unikal_id')
     list_select_related = ('mahalla', 'oila', 'ijtimoiy_toifa')
     autocomplete_fields = (
-        'oila', 'mahalla', 'ijtimoiy_toifa', 'muammo_toifasi', 'murojaat_sababi',
+        'oila', 'mahalla', 'ijtimoiy_toifa', 'muammo_toifasi',
     )
+    filter_horizontal = ('murojaat_sabablari',)
     date_hierarchy = 'uchrashuv_sana'
     inlines = (XizmatInline, IjtimoiyHolatInline)
     readonly_fields = (
@@ -99,10 +101,10 @@ class ShaxsAdmin(admin.ModelAdmin):
             ),
         }),
         ('Murojaat', {
-            'fields': ('murojaat_sababi', 'murojaat_izohi'),
+            'fields': ('murojaat_sabablari',),
         }),
         ('Muammo', {
-            'fields': ('muammo_aniqlanmagan',),
+            'fields': ('muammo_aniqlangan',),
         }),
         ('Tizim', {
             'classes': ('collapse',),

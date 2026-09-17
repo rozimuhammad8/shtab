@@ -6,6 +6,7 @@
  *     tanlovlar, qidiruv va klaviatura bilan boshqarish.
  *  2. Mavzu (yorug'/qorong'i) almashtirish.
  *  3. Xizmatlar jadvaliga qator qo'shish/o'chirish (Django formset).
+ *  4. Joyida tahrirlash: «Tahrirlash» / «Saqlash» tugmalari.
  *
  * JavaScript ishlamasa ham sahifalar to'liq ishlashda davom etadi:
  * `<select>` elementlari o'z holida qoladi.
@@ -421,7 +422,11 @@
         document.querySelectorAll('[data-formset]').forEach(function (oram) {
             var prefiks = oram.dataset.formset;
             var jami = document.getElementById('id_' + prefiks + '-TOTAL_FORMS');
-            var namuna = oram.querySelector('[data-formset-empty]');
+            // Namuna `[data-formset]` ichida ham, tashqarisida ham turishi
+            // mumkin - shuning uchun "qo'shish" tugmasi kabi prefiks bo'yicha
+            // butun sahifadan izlanadi.
+            var namuna = document.querySelector('[data-formset-empty="' + prefiks + '"]')
+                      || oram.querySelector('[data-formset-empty]');
             var qoshish = document.querySelector('[data-formset-add="' + prefiks + '"]');
             if (!jami || !namuna || !qoshish) return;
 
@@ -462,7 +467,68 @@
     }
 
     /* --------------------------------------------------------------------
-     * 4. Mahalla o'zgarganda oilalar ro'yxatini yangilash
+     * 4. Joyida tahrirlash (inline edit)
+     *
+     * «Tahrirlash» bosilganda formaga `.is-editing` klassi qo'shiladi -
+     * qiymatlar o'rniga forma maydonlari ko'rinadi. «Saqlash» oddiy POST,
+     * «Bekor qilish» esa sahifani qayta yuklab o'zgarishlarni tashlaydi.
+     * ------------------------------------------------------------------ */
+
+    function joyidaTahrir() {
+        var forma = document.querySelector('[data-inline-edit]');
+        if (!forma) return;
+
+        var ozgardi = false;
+        forma.addEventListener('input', function () { ozgardi = true; });
+        forma.addEventListener('change', function () { ozgardi = true; });
+
+        function boshla() {
+            forma.classList.add('is-editing');
+            // Maxsus ro'yxatlar yashirin holatda yasalgan bo'lsa,
+            // kengligini qaytadan hisoblash uchun hodisa yuboramiz.
+            window.dispatchEvent(new Event('resize'));
+            var birinchi = forma.querySelector(
+                '.rw input:not([type=hidden]), .rw textarea, .rw .cs-button'
+            );
+            if (birinchi) birinchi.focus();
+        }
+
+        forma.querySelectorAll('[data-tahrir-boshla]').forEach(function (t) {
+            t.addEventListener('click', boshla);
+        });
+
+        forma.querySelectorAll('[data-tahrir-bekor]').forEach(function (t) {
+            t.addEventListener('click', function () {
+                if (ozgardi && !window.confirm(
+                        "Saqlanmagan o'zgarishlar bor. Bekor qilinsinmi?")) {
+                    return;
+                }
+                // Sahifani qaytadan yuklab, saqlanmagan qiymatlarni tashlaymiz.
+                window.location = window.location.pathname;
+            });
+        });
+
+        // Tahrirlash holatida sahifadan chiqib ketishdan ogohlantiramiz.
+        window.addEventListener('beforeunload', function (e) {
+            if (forma.classList.contains('is-editing') && ozgardi) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Saqlashda ogohlantirish kerak emas.
+        forma.addEventListener('submit', function () { ozgardi = false; });
+
+        // Xato bilan qaytgan sahifa allaqachon tahrirlash holatida bo'ladi -
+        // birinchi xatoli maydonga o'tamiz.
+        if (forma.classList.contains('is-editing')) {
+            var xatoli = forma.querySelector('.has-error');
+            if (xatoli) xatoli.scrollIntoView({ block: 'center' });
+        }
+    }
+
+    /* --------------------------------------------------------------------
+     * 5. Mahalla o'zgarganda oilalar ro'yxatini yangilash
      * ------------------------------------------------------------------ */
 
     function oilalarniBogla() {
@@ -523,6 +589,7 @@
         mavzuniSozla();
         formsetniSozla();
         oilalarniBogla();
+        joyidaTahrir();
 
         // O'chirishdan oldin tasdiqlash
         document.querySelectorAll('[data-confirm]').forEach(function (f) {

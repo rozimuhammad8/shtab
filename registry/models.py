@@ -92,12 +92,11 @@ class MuammoToifasi(models.Model):
 
 
 class MurojaatSababi(models.Model):
-    """Shaxs nima uchun murojaat qilgani (murojaat sababi) lug'ati.
+    """Murojaat sabablari lug'ati ("nima uchun murojaat qilgan").
 
-    Import vaqtida har bir shaxsning sababi manba faylning "kerakli xizmatlar"
-    ustunlaridan (19-42) keltirib chiqariladi - ular fuqaro nima so'raganini
-    ko'rsatadi. Murojaat mazmuni esa 43-ustundan olinadi.
-    Ro'yxatni veb-interfeysda tahrirlash/to'ldirish mumkin.
+    To'liq ro'yxat `import_excel.py` dagi `SABAB_KATALOGI` da: har bir sabab
+    qaysi kerakli xizmat ustunlariga va 43-ustundagi qaysi kalit so'zlarga
+    mos kelishi ko'rsatilgan. Ro'yxatni veb-interfeysda tahrirlash mumkin.
     """
 
     nomi = models.CharField("Murojaat sababi", max_length=255, unique=True)
@@ -280,21 +279,22 @@ class Shaxs(models.Model):
     xizmat_korsatilgan = models.BooleanField("Xizmat ko'rsatilgan", default=False)
 
     # --- murojaat (nima uchun murojaat qilgan) ---
-    # Manba faylning 43-ustuni ("Бошқа муаммоли оилалар (Изоҳ)") aynan
-    # murojaat mazmunini saqlaydi, sabab esa kerakli xizmatlardan keltirib
-    # chiqariladi - ikkisi ham `import_excel` buyrug'ida to'ldiriladi.
-    murojaat_sababi = models.ForeignKey(
-        MurojaatSababi, on_delete=models.PROTECT, null=True, blank=True,
-        related_name='shaxslar', verbose_name="Nima uchun murojaat qilgan",
-    )
-    murojaat_izohi = models.TextField(
-        "Murojaat mazmuni", blank=True,
-        help_text="Manba faylning 43-ustuni: fuqaro nima so'ragani",
+    # Bir shaxs bir nechta sabab bilan murojaat qilishi mumkin, shuning uchun
+    # ko'p-ko'p bog'lanish. Import vaqtida ikki manbadan to'ldiriladi:
+    #   * "kerakli xizmatlar" ustunlari (19-42) - qanday xizmat kerakligi;
+    #   * 43-ustun ("Бошқа муаммоли оилалар (Изоҳ)") - erkin matn, kalit
+    #     so'zlar bo'yicha sabab toifalariga ajratiladi.
+    murojaat_sabablari = models.ManyToManyField(
+        MurojaatSababi, blank=True, related_name='shaxslar',
+        verbose_name="Nima uchun murojaat qilgan",
     )
 
     # --- muammo tavsifi ---
-    muammo_aniqlanmagan = models.BooleanField(
-        "Uchrashuvda muammo aniqlanmagan", default=False,
+    # Manba faylning 44-ustuni teskari mantiqda: "Учрашувда муаммо
+    # аниқланмаган оила". Qo'sh inkordan qutulish uchun import vaqtida
+    # teskarisiga aylantirib saqlanadi.
+    muammo_aniqlangan = models.BooleanField(
+        "Uchrashuvda muammo aniqlangan", default=False, db_index=True,
     )
 
     # --- tezkor hisoblar (import vaqtida to'ldiriladi) ---

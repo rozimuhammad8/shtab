@@ -2,112 +2,340 @@
 
 {% block title %}{{ shaxs.fio }} &middot; Shtab ma'lumotlar bazasi{% endblock %}
 
+{% comment %}
+Bu sahifa bir vaqtda "ko'rish" va "tahrirlash" ko'rinishini saqlaydi:
+har bir qiymat `.ro` (read-only) va `.rw` (forma maydoni) juftligi bo'lib
+chiqadi, `ui.js` esa formaga `.is-editing` klassini qo'shib/olib ularni
+almashtiradi. Shu sababli tahrirlash uchun boshqa sahifaga o'tish shart emas.
+{% endcomment %}
+
 {% block content %}
 <a class="back-link" href="{% url 'registry:shaxs_list' %}">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>
     Ro'yxatga qaytish
 </a>
 
-<div class="page-head">
-    <div>
-        <h1>{{ shaxs.fio }}</h1>
-        <p class="subtitle">
-            {{ shaxs.mahalla.nomi }} &middot; oila {{ shaxs.oila.unikal_id }}
-            {% if shaxs.asosiy_arizachi %}&middot; <span class="badge badge-info">asosiy arizachi</span>{% endif %}
-            {% if shaxs.takroriy_jshshir %}&middot; <span class="badge badge-warn">JSHSHIR takroriy</span>{% endif %}
-        </p>
+<form method="post"
+      class="inline-edit{% if tahrir_rejimi %} is-editing{% endif %}"
+      data-inline-edit novalidate>
+    {% if form %}{% csrf_token %}{% endif %}
+
+    <div class="page-head">
+        <div>
+            <h1>
+                <span class="ro">{{ shaxs.fio }}</span>
+                {% if form %}<span class="rw rw-title">{{ form.fio }}</span>{% endif %}
+            </h1>
+            <p class="subtitle">
+                {{ shaxs.mahalla.nomi }} &middot; oila {{ shaxs.oila.unikal_id }}
+                {% if shaxs.asosiy_arizachi %}&middot; <span class="badge badge-info">asosiy arizachi</span>{% endif %}
+                {% if shaxs.takroriy_jshshir %}&middot; <span class="badge badge-warn">JSHSHIR takroriy</span>{% endif %}
+            </p>
+        </div>
+
+        {% if form %}
+        <div class="page-head-actions">
+            <button type="button" class="btn faqat-korish" data-tahrir-boshla>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.2 2.8a1.6 1.6 0 0 1 2.3 2.3L5.5 13H3v-2.5z"/></svg>
+                Tahrirlash
+            </button>
+            <a class="btn btn-secondary faqat-korish" href="{% url 'registry:shaxs_delete' shaxs.pk %}">
+                O'chirish
+            </a>
+
+            <button type="submit" class="btn faqat-tahrir">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5"/></svg>
+                Saqlash
+            </button>
+            <button type="button" class="btn btn-secondary faqat-tahrir" data-tahrir-bekor>
+                Bekor qilish
+            </button>
+        </div>
+        {% endif %}
     </div>
-    {% if user.is_authenticated %}
-    <div class="page-head-actions">
-        <a class="btn" href="{% url 'registry:shaxs_update' shaxs.pk %}">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.2 2.8a1.6 1.6 0 0 1 2.3 2.3L5.5 13H3v-2.5z"/></svg>
-            Tahrirlash
-        </a>
-        <a class="btn btn-secondary" href="{% url 'registry:shaxs_delete' shaxs.pk %}">O'chirish</a>
+
+    {% if form.non_field_errors or xizmat_formset.non_form_errors %}
+    <div class="form-errors">
+        <strong>Saqlash mumkin emas:</strong>
+        <ul>
+            {% for xato in form.non_field_errors %}<li>{{ xato }}</li>{% endfor %}
+            {% for xato in xizmat_formset.non_form_errors %}<li>{{ xato }}</li>{% endfor %}
+        </ul>
     </div>
     {% endif %}
-</div>
 
-{% if shaxs.fio_kiril and shaxs.fio_kiril != shaxs.fio %}
-<p class="muted" style="margin:-14px 0 20px">
-    Manba fayldagi yozuv: {{ shaxs.fio_kiril }}
-</p>
-{% endif %}
+    {% if shaxs.fio_kiril and shaxs.fio_kiril != shaxs.fio %}
+    <p class="muted" style="margin:-14px 0 20px">
+        Manba fayldagi yozuv: {{ shaxs.fio_kiril }}
+    </p>
+    {% endif %}
 
-<div class="two-col">
-    <section class="panel">
-        <h2>Shaxsiy ma'lumotlar</h2>
-        <table class="detail-table">
-            <tr><th>JSHSHIR</th><td class="mono">{{ shaxs.jshshir|default:"—" }}</td></tr>
-            <tr><th>Jinsi</th><td>{{ shaxs.get_jinsi_display|default:"—" }}</td></tr>
-            <tr><th>Tug'ilgan sana</th><td>{{ shaxs.tugilgan_sana|date:"d.m.Y"|default:"—" }}</td></tr>
-            <tr><th>Yoshi</th><td>{{ shaxs.yoshi|floatformat:"1u"|default_if_none:"—" }}</td></tr>
-            <tr><th>Ijtimoiy toifa</th><td>{{ shaxs.ijtimoiy_toifa.nomi|default:"—" }}</td></tr>
-            <tr><th>Izoh (muammo toifasi)</th><td>{{ shaxs.muammo_toifasi.nomi|default:"—" }}</td></tr>
-            <tr><th>Reestrdan chiqqan</th>
-                <td>{% if shaxs.reestrdan_chiqqan %}<span class="badge badge-warn">Ha</span>{% else %}Yo'q{% endif %}</td>
-            </tr>
-            <tr><th>Hudud</th><td>{{ shaxs.mahalla.hudud.nomi }}</td></tr>
-            <tr><th>Mahalla</th>
-                <td><a href="{% url 'registry:mahalla_detail' shaxs.mahalla.pk %}">{{ shaxs.mahalla.nomi }}</a></td>
-            </tr>
-            <tr><th>Oila ID</th><td class="mono">{{ shaxs.oila.unikal_id }}</td></tr>
-            <tr><th>Oila a'zolari soni</th><td>{{ shaxs.oila.azolari_soni|default:"—" }}</td></tr>
-        </table>
-    </section>
+    <div class="two-col">
+        <section class="panel">
+            <h2>Shaxsiy ma'lumotlar</h2>
+            <table class="detail-table">
+                <tr>
+                    <th>JSHSHIR</th>
+                    <td>
+                        <span class="ro mono">{{ shaxs.jshshir|default:"—" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.jshshir %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Jinsi</th>
+                    <td>
+                        <span class="ro">{{ shaxs.get_jinsi_display|default:"—" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.jinsi %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Tug'ilgan sana</th>
+                    <td>
+                        <span class="ro">{{ shaxs.tugilgan_sana|date:"d.m.Y"|default:"—" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.tugilgan_sana %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Yoshi</th>
+                    <td>
+                        <span class="ro">{{ shaxs.yoshi|floatformat:"1u"|default_if_none:"—" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.yoshi %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Ijtimoiy toifa</th>
+                    <td>
+                        <span class="ro">{{ shaxs.ijtimoiy_toifa.nomi|default:"—" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.ijtimoiy_toifa %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Izoh (muammo toifasi)</th>
+                    <td>
+                        <span class="ro">{{ shaxs.muammo_toifasi.nomi|default:"—" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.muammo_toifasi %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Asosiy arizachi</th>
+                    <td>
+                        <span class="ro">{{ shaxs.asosiy_arizachi|yesno:"Ha,Yo'q" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.asosiy_arizachi belgi=1 %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Reestrdan chiqqan</th>
+                    <td>
+                        <span class="ro">{% if shaxs.reestrdan_chiqqan %}<span class="badge badge-warn">Ha</span>{% else %}Yo'q{% endif %}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.reestrdan_chiqqan belgi=1 %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Hudud</th>
+                    <td>{{ shaxs.mahalla.hudud.nomi }}</td>
+                </tr>
+                <tr>
+                    <th>Mahalla</th>
+                    <td>
+                        <span class="ro">
+                            <a href="{% url 'registry:mahalla_detail' shaxs.mahalla.pk %}">{{ shaxs.mahalla.nomi }}</a>
+                        </span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.mahalla %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Oila ID</th>
+                    <td>
+                        <span class="ro mono">{{ shaxs.oila.unikal_id }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.oila %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Oila a'zolari soni</th>
+                    <td>{{ shaxs.oila.azolari_soni|default:"—" }}</td>
+                </tr>
+            </table>
+        </section>
 
-    <section class="panel">
-        <h2>Uchrashuv va xizmatlar</h2>
-        <table class="detail-table">
-            <tr><th>Uchrashuv sanasi</th><td>{{ shaxs.uchrashuv_sana|date:"d.m.Y"|default:"—" }}</td></tr>
-            <tr><th>Uchrashuvda qatnashgan</th>
-                <td>{% if shaxs.uchrashuvda_qatnashgan %}<span class="badge badge-yes">Ha</span>{% else %}<span class="badge badge-no">Yo'q</span>{% endif %}</td>
-            </tr>
-            <tr><th>Xizmat sanasi</th><td>{{ shaxs.xizmat_sana|date:"d.m.Y"|default:"—" }}</td></tr>
-            <tr><th>Xizmat ko'rsatilgan</th>
-                <td>{% if shaxs.xizmat_korsatilgan %}<span class="badge badge-yes">Ha</span>{% else %}<span class="badge badge-no">Yo'q</span>{% endif %}</td>
-            </tr>
-            <tr><th>Nima uchun murojaat qilgan</th>
-                <td>{% if shaxs.murojaat_sababi %}<span class="badge badge-info">{{ shaxs.murojaat_sababi.nomi }}</span>{% else %}&mdash;{% endif %}</td>
-            </tr>
-            {% if shaxs.murojaat_izohi %}
-            <tr><th>Murojaat mazmuni</th><td>{{ shaxs.murojaat_izohi|linebreaksbr }}</td></tr>
+        <section class="panel">
+            <h2>Uchrashuv va xizmatlar</h2>
+            <table class="detail-table">
+                <tr>
+                    <th>Uchrashuv sanasi</th>
+                    <td>
+                        <span class="ro">{{ shaxs.uchrashuv_sana|date:"d.m.Y"|default:"—" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.uchrashuv_sana %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Uchrashuvda qatnashgan</th>
+                    <td>
+                        <span class="ro">{% if shaxs.uchrashuvda_qatnashgan %}<span class="badge badge-yes">Ha</span>{% else %}<span class="badge badge-no">Yo'q</span>{% endif %}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.uchrashuvda_qatnashgan belgi=1 %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Xizmat sanasi</th>
+                    <td>
+                        <span class="ro">{{ shaxs.xizmat_sana|date:"d.m.Y"|default:"—" }}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.xizmat_sana %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Xizmat ko'rsatilgan</th>
+                    <td>
+                        <span class="ro">{% if shaxs.xizmat_korsatilgan %}<span class="badge badge-yes">Ha</span>{% else %}<span class="badge badge-no">Yo'q</span>{% endif %}</span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.xizmat_korsatilgan belgi=1 %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Nima uchun murojaat qilgan</th>
+                    <td>
+                        <span class="ro">
+                            {% if shaxs.murojaat_sabablari.all %}
+                            <ul class="badge-list">
+                                {% for sabab in shaxs.murojaat_sabablari.all %}
+                                <li><span class="badge badge-info">{{ sabab.nomi }}</span></li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}&mdash;{% endif %}
+                        </span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.murojaat_sabablari %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Muammo aniqlangan</th>
+                    <td>
+                        <span class="ro">
+                            {% if shaxs.muammo_aniqlangan %}
+                                <span class="badge badge-warn">Ha</span>
+                            {% else %}
+                                <span class="badge badge-yes">Yo'q</span>
+                            {% endif %}
+                        </span>
+                        {% include 'registry/partials/tahrir.html' with maydon=form.muammo_aniqlangan belgi=1 %}
+                    </td>
+                </tr>
+            </table>
+
+            {% comment %}
+            Xizmatlar shu panelning ichida: ko'rish holatida nishonlar,
+            tahrirlash holatida forma to'plami ko'rinadi.
+            {% endcomment %}
+            <div class="ro">
+                {% if kerakli_xizmatlar %}
+                <h3>Kerak bo'lgan xizmatlar</h3>
+                <ul class="badge-list">
+                    {% for x in kerakli_xizmatlar %}
+                    <li><span class="badge badge-info">{{ x.turi.nomi }}{% if x.summa_mln %} &middot; {{ x.summa_mln|floatformat:"3u" }} mln{% endif %}</span></li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if korsatilgan_xizmatlar %}
+                <h3>Ko'rsatilgan xizmatlar</h3>
+                <ul class="badge-list">
+                    {% for x in korsatilgan_xizmatlar %}
+                    <li><span class="badge badge-yes">{{ x.turi.nomi }}{% if x.summa_mln %} &middot; {{ x.summa_mln|floatformat:"3u" }} mln{% endif %}</span></li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if not kerakli_xizmatlar and not korsatilgan_xizmatlar %}
+                <h3>Xizmatlar</h3>
+                <p class="muted" style="margin:0">Xizmat yozuvi yo'q.</p>
+                {% endif %}
+            </div>
+
+            {% if form %}
+            <div class="rw">
+                <div class="bolim-sarlavha">
+                    <h3>Xizmatlar</h3>
+                    <button type="button" class="btn btn-secondary btn-sm"
+                            data-formset-add="{{ xizmat_formset.prefix }}">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+                        Xizmat qo'shish
+                    </button>
+                </div>
+
+                {{ xizmat_formset.management_form }}
+                <div class="formset formset-ixcham" data-formset="{{ xizmat_formset.prefix }}">
+                    <div data-formset-rows>
+                        {% for xf in xizmat_formset %}
+                        <div class="formset-row{% if xf.DELETE.value %} is-deleted{% endif %}">
+                            {% for yashirin in xf.hidden_fields %}{{ yashirin }}{% endfor %}
+                            <div class="field f-turi{% if xf.turi.errors %} has-error{% endif %}" data-ustun="Xizmat turi">
+                                {{ xf.turi }}
+                                {% for xato in xf.turi.errors %}<p class="field-error">{{ xato }}</p>{% endfor %}
+                            </div>
+                            <div class="field f-holat{% if xf.holat.errors %} has-error{% endif %}" data-ustun="Holat">
+                                {{ xf.holat }}
+                                {% for xato in xf.holat.errors %}<p class="field-error">{{ xato }}</p>{% endfor %}
+                            </div>
+                            <div class="field f-soni" data-ustun="Soni">{{ xf.soni }}</div>
+                            <div class="field f-summa" data-ustun="Summa (mln)">{{ xf.summa_mln }}</div>
+                            <div class="f-ochir">
+                                {{ xf.DELETE }}
+                                <button type="button" class="row-remove" title="Qatorni o'chirish belgilash">
+                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h10M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5M4.5 5.5l.6 7a.9.9 0 0 0 .9.8h4a.9.9 0 0 0 .9-.8l.6-7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-state" style="padding:26px 20px">
+                            <p>Xizmat yozuvi yo'q</p>
+                            <small>&laquo;Xizmat qo'shish&raquo; tugmasi bilan qo'shing.</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <template data-formset-empty="{{ xizmat_formset.prefix }}">
+                        <div class="formset-row">
+                            {% for yashirin in xizmat_formset.empty_form.hidden_fields %}{{ yashirin }}{% endfor %}
+                            <div class="field f-turi" data-ustun="Xizmat turi">{{ xizmat_formset.empty_form.turi }}</div>
+                            <div class="field f-holat" data-ustun="Holat">{{ xizmat_formset.empty_form.holat }}</div>
+                            <div class="field f-soni" data-ustun="Soni">{{ xizmat_formset.empty_form.soni }}</div>
+                            <div class="field f-summa" data-ustun="Summa (mln)">{{ xizmat_formset.empty_form.summa_mln }}</div>
+                            <div class="f-ochir">
+                                <button type="button" class="row-remove" title="Qatorni olib tashlash">
+                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h10M6.5 5.5V4a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v1.5M4.5 5.5l.6 7a.9.9 0 0 0 .9.8h4a.9.9 0 0 0 .9-.8l.6-7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
             {% endif %}
-            <tr><th>Muammo aniqlanmagan</th><td>{{ shaxs.muammo_aniqlanmagan|yesno:"Ha,Yo'q" }}</td></tr>
-        </table>
 
-        {% if kerakli_xizmatlar %}
-        <h3>Kerak bo'lgan xizmatlar</h3>
-        <ul class="badge-list">
-            {% for x in kerakli_xizmatlar %}
-            <li><span class="badge badge-info">{{ x.turi.nomi }}{% if x.summa_mln %} &middot; {{ x.summa_mln|floatformat:"3u" }} mln{% endif %}</span></li>
-            {% endfor %}
-        </ul>
-        {% endif %}
+            <h3>Ijtimoiy holat belgilari</h3>
+            <div class="ro">
+                {% if ijtimoiy_holatlar %}
+                <ul class="badge-list">
+                    {% for h in ijtimoiy_holatlar %}
+                    <li><span class="badge">{{ h.turi.nomi }}</span></li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="muted" style="margin:0">Belgi qo'yilmagan.</p>
+                {% endif %}
+            </div>
+            {% include 'registry/partials/tahrir.html' with maydon=form.ijtimoiy_holatlar %}
+        </section>
+    </div>
 
-        {% if korsatilgan_xizmatlar %}
-        <h3>Ko'rsatilgan xizmatlar</h3>
-        <ul class="badge-list">
-            {% for x in korsatilgan_xizmatlar %}
-            <li><span class="badge badge-yes">{{ x.turi.nomi }}{% if x.summa_mln %} &middot; {{ x.summa_mln|floatformat:"3u" }} mln{% endif %}</span></li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-        {% if ijtimoiy_holatlar %}
-        <h3>Ijtimoiy holat belgilari</h3>
-        <ul class="badge-list">
-            {% for h in ijtimoiy_holatlar %}
-            <li><span class="badge">{{ h.turi.nomi }}</span></li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-        {% if not kerakli_xizmatlar and not korsatilgan_xizmatlar and not ijtimoiy_holatlar %}
-        <p class="muted" style="margin-top:14px">Xizmat va ijtimoiy holat belgilari qo'yilmagan.</p>
-        {% endif %}
-    </section>
-</div>
+    {% if form %}
+    {# Pastda ham saqlash paneli - uzun sahifada qulay bo'lishi uchun #}
+    <div class="saqlash-paneli faqat-tahrir">
+        <span class="muted">O'zgarishlar saqlanmagan</span>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-secondary" data-tahrir-bekor>Bekor qilish</button>
+        <button type="submit" class="btn">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5"/></svg>
+            Saqlash
+        </button>
+    </div>
+    {% endif %}
+</form>
 
 {% if oila_azolari %}
 <section class="panel panel-table">

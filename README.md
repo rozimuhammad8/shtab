@@ -65,28 +65,104 @@ JavaScript o'chirilgan bo'lsa sahifalar ishlashda davom etadi - oddiy
 | MFY nomini tuzatish | `/mahallalar/<id>/tahrirlash/` |
 
 Shaxs formasida shaxsiy ma'lumotlar, mahalla/oila, ijtimoiy reestr,
-uchrashuv sanalari, ijtimoiy holat belgilari (ko'p tanlovli ro'yxat) va
-**xizmatlar jadvali** (qator qo'shish/o'chirish mumkin) bir joyda tahrirlanadi.
+murojaat sabablari (ko'p tanlovli), uchrashuv sanalari, ijtimoiy holat
+belgilari (ko'p tanlovli) va **xizmatlar jadvali** (qator qo'shish/o'chirish
+mumkin) bir joyda tahrirlanadi.
+
+### Sahifadan turib tahrirlash (inline edit)
+
+Shaxs kartochkasi (`/shaxslar/<id>/`) boshqa sahifaga o'tmasdan
+tahrirlanadi:
+
+1. **«Tahrirlash»** tugmasi bosilganda qiymatlar o'rniga forma maydonlari
+   ko'rinadi (sahifa qayta yuklanmaydi).
+2. **«Saqlash»** - yuqorida va pastdagi "yopishqoq" panelda; bosilganda
+   yozuv saqlanadi va sahifa yangi qiymatlar bilan qaytadi.
+3. **«Bekor qilish»** - o'zgarishlarni tashlaydi (saqlanmagan o'zgarish
+   bo'lsa tasdiqlash so'raladi).
+
+Texnik tomoni: har bir qiymat `.ro` (ko'rish) va `.rw` (forma maydoni)
+juftligi bo'lib chiqadi, `ui.js` esa formaga `.is-editing` klassini
+qo'shib/olib ularni almashtiradi. Saqlash oddiy `POST` - JavaScript
+ishlamasa ham forma yuboriladi. Tekshiruv xatosi bo'lsa sahifa darhol
+tahrirlash holatida, xato matnlari bilan qaytadi.
+
+Shaxs kartochkasida **barcha xizmat ma'lumoti bitta joyda** - «Uchrashuv va
+xizmatlar» panelida turadi: ko'rish holatida «Kerak bo'lgan xizmatlar» va
+«Ko'rsatilgan xizmatlar» nishonlari, tahrirlash holatida esa shu yerda
+xizmatlar jadvali (qator qo'shish/o'chirish) ochiladi. Panel yarim kenglikda
+bo'lgani uchun jadval ixcham ko'rinishga (`.formset-ixcham`) o'tadi: har bir
+yozuv uch satrga bo'linadi va ustun nomlari maydonlar ustida chiqadi.
 
 Tekshiruvlar: JSHSHIR faqat 14 xonali raqam; oila tanlangan mahallaga tegishli
 bo'lishi shart; uchrashuv sanasi tug'ilgan sanadan oldin bo'lmaydi. Mahalla
 o'zgartirilsa, oilalar ro'yxati sahifani qayta yuklamasdan yangilanadi
 (`/api/oilalar/`).
 
-### Murojaat sababi (nima uchun murojaat qilgan)
+### Nima uchun murojaat qilgan (ko'p tanlovli)
 
-Manba `database.xlsx` faylida bu ma'lumot **yo'q** - u shtab xodimlari
-tomonidan kiritiladi. Shu sababli:
+Bir fuqaro bir vaqtda bir nechta sabab bilan murojaat qilishi mumkin, shu
+sababli `Shaxs.murojaat_sabablari` — **ko'p-ko'p bog'lanish** (multiple
+choice). Ma'lumot to'liq `database.xlsx` dan olinadi, ikki manbadan:
 
-- `MurojaatSababi` lug'ati (`/malumotnoma/murojaat-sabablari/`) - sabablar
-  ro'yxati. `0004_...` migratsiyasi 12 ta boshlang'ich sababni qo'shadi
-  (ish bilan ta'minlash, imtiyozli kredit, tibbiy yordam va h.k.) - bu
-  shunchaki qulay boshlanish nuqtasi, ro'yxatni to'ldirish/qisqartirish mumkin.
-  `faol` belgisi olingan sabab yangi yozuvlarda ko'rinmaydi, lekin eski
-  yozuvlarda saqlanib qoladi.
-- `Shaxs.murojaat_sababi` (FK) va `Shaxs.murojaat_izohi` (erkin matn) -
-  shaxs kartochkasidagi «Uchrashuv va xizmatlar» panelida ko'rinadi,
-  shaxslar ro'yxatida esa sabab bo'yicha filtrlash mumkin.
+| Manba | Nima beradi | Natija |
+|---|---|---|
+| **19-42 ustunlar** «kerakli xizmatlar» | fuqaroga qanday xizmat kerakligi | 1 714 shaxs |
+| **43-ustun** «Бошқа муаммоли оилалар (Изоҳ)» | erkin matn: «Uy joyini ta'mirlash», «Nogironlik aravachasi olish», «subsidiya»... | 251 shaxs |
+
+Jami **2 768 bog'lanish, 1 909 shaxsda**; 21 ta sabab toifasi.
+43-ustundagi 251 qatorning **hammasi** (100%) kalit so'zlar bo'yicha
+toifalarga ajratildi, 70 qator birdan ortiq toifaga tushdi.
+
+Butun mantiq `import_excel.py` dagi bitta **`SABAB_KATALOGI`** jadvalida:
+har bir sabab uchun (a) qaysi `XizmatTuri.kod` larga mos kelishi va
+(b) 43-ustun matnida qidiriladigan kalit so'zlar ko'rsatilgan. Jadvalni
+o'zgartirib qayta import qilsangiz, taqsimot ham o'zgaradi.
+
+Hozirgi taqsimot:
+
+```
+739 Ijtimoiy daftarlardan mablag'    64 Uy-joy va ta'mirlash
+557 Ish bilan ta'minlash              39 Kommunal va infratuzilma
+360 Tibbiy yordam va reabilitatsiya   37 Ta'lim, kurs va to'garaklar
+344 Imtiyozli kredit yoki ssuda       28 Nogironlik masalalari
+156 Homiylik yordami                  17 Aliment undirish
+118 Tadbirkorlikni yo'lga qo'yish     15 Mehnat migratsiyasi
+ 98 Kasb-hunarga o'qitish             13 Parvarish va qarovchilik
+ 83 Hujjat rasmiylashtirish           10 Yuridik yordam
+ 82 Farzandni bog'chaga joylashtirish  4 Oilaviy nizo va psixologik yordam
+                                       2 Bolani asrab olish va vasiylik
+                                       1 Pensiya masalasi
+                                       1 Meros va ulush masalasi
+```
+
+Lug'at `/malumotnoma/murojaat-sabablari/` da tahrirlanadi. `faol` belgisi
+olingan sabab yangi yozuvlarda tanlash uchun ko'rinmaydi, lekin eski
+yozuvlarda saqlanib qoladi. Import vaqtida katalogda yo'q va hech kimga
+bog'lanmagan sabablar avtomatik o'chiriladi.
+
+Shaxslar ro'yxatida sabab bo'yicha **filtrlash** mumkin.
+
+> Ilgari bu yerda `murojaat_izohi` erkin matn maydoni ham bor edi - u olib
+> tashlandi (`0006` migratsiyasi), mazmuni esa sabab toifalariga o'tkazildi.
+> 43-ustunning asl matni manba faylda saqlanib turadi.
+
+### «Muammo aniqlangan» bayrog'i
+
+Manba faylning **44-ustuni** teskari mantiqda: «Учрашувда муаммо аниқланмаган
+оила». Interfeysda bu «Muammo aniqlanmagan: Yo'q» degan qo'sh inkorni berardi.
+
+Shu sababli `0007` migratsiyasida maydon nomi ham, qiymatlari ham to'g'ri
+mantiqqa o'tkazildi: **`Shaxs.muammo_aniqlangan`** — «Muammo aniqlangan:
+Ha / Yo'q». Import ham 44-ustunni teskarisiga o'girib saqlaydi
+(`not _bayroq(...)`).
+
+- **1 904** shaxsda muammo aniqlangan (`Ha`)
+- **14 055** shaxsda aniqlanmagan (`Yo'q`)
+
+Bu holat shaxs kartochkasida, **shaxslar jadvalida alohida ustun** sifatida va
+filtrda (`Barchasi / Aniqlangan / Aniqlanmagan`) ko'rinadi; admin panelda ham
+filtrlanadi.
 
 ### Ma'lumotnoma: barcha jadvallarga yozuv qo'shish
 
@@ -131,7 +207,7 @@ Hudud -> Mahalla -> Oila -> Shaxs
                               |-> ShaxsIjtimoiyHolat -> IjtimoiyHolatTuri
                               |-> IjtimoiyToifa   (FK)
                               |-> MuammoToifasi   (FK)
-                              |-> MurojaatSababi  (FK)
+                              |-> MurojaatSababi  (M2M)
 ```
 
 Manba fayldagi 0/1 bayroq ustunlari JSON ko'rinishida emas, **normal holatga
@@ -149,7 +225,7 @@ keltirilgan** ko'rinishda saqlanadi:
 | `ShaxsIjtimoiyHolat` | shaxsga qo'yilgan belgi | 19 160 |
 | `IjtimoiyToifa` | ijtimoiy reestrdagi toifa | 3 |
 | `MuammoToifasi` | "Izoh" ustunidagi muammo toifasi | 15 |
-| `MurojaatSababi` | murojaat sababi (manba faylda yo'q) | 12 |
+| `MurojaatSababi` | murojaat sababi lug'ati | 21 |
 
 Shu sababli har qanday belgi yoki xizmat turi bo'yicha filtrlash va
 hisob-kitob qilish mumkin (masalan, "Ishsiz" belgisi qo'yilgan shaxslar yoki
@@ -175,10 +251,10 @@ python manage.py createsuperuser   # admin panel uchun
 yuklash uchun). Import ~1 daqiqa vaqt oladi.
 
 > **Diqqat:** `--tozalash` barcha `Shaxs` yozuvlarini o'chirib qaytadan
-> yaratadi. Shu sababli veb-interfeys orqali qo'lda kiritilgan va manba
-> faylda mavjud bo'lmagan ma'lumotlar — **murojaat sababi va murojaat
-> izohi** — yo'qoladi. `MurojaatSababi` lug'atining o'zi o'chmaydi.
-> Qo'lda kiritilgan ma'lumot ko'p bo'lsa, avval zaxira oling:
+> yaratadi. Manba fayldan keladigan hamma narsa (murojaat sababi va mazmuni
+> ham) qayta to'ldiriladi, lekin veb-interfeysda **qo'lda kiritilgan
+> o'zgarishlar yo'qoladi**. Lug'atlar (`MurojaatSababi`, `XizmatTuri` va
+> h.k.) o'chmaydi. Qo'lda tahrirlangan ma'lumot bo'lsa, avval zaxira oling:
 > `python -X utf8 manage.py dumpdata registry > zaxira.json`
 
 Standart holatda SQLite ishlatiladi. Katta hajmda barqaror ishlash uchun

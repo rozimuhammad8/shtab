@@ -71,8 +71,7 @@
         <div class="form-section">
             <h3>Murojaat</h3>
             <div class="form-grid">
-                {% include 'registry/partials/field.html' with field=form.murojaat_sababi %}
-                {% include 'registry/partials/field.html' with field=form.murojaat_izohi wide=1 %}
+                {% include 'registry/partials/field.html' with field=form.murojaat_sabablari wide=1 %}
             </div>
         </div>
 
@@ -89,7 +88,7 @@
         <div class="form-section" style="margin-bottom:0">
             <h3>Aniqlangan muammo</h3>
             <div class="form-grid">
-                {% include 'registry/partials/field.html' with field=form.muammo_aniqlanmagan %}
+                {% include 'registry/partials/field.html' with field=form.muammo_aniqlangan %}
             </div>
         </div>
     </div>
@@ -152,7 +151,7 @@
         </p>
 
         {# JavaScript yangi qator qo'shishda shu namunadan foydalanadi #}
-        <template data-formset-empty>
+        <template data-formset-empty="{{ xizmatlar.prefix }}">
             <div class="formset-row">
                 {% for yashirin in xizmatlar.empty_form.hidden_fields %}{{ yashirin }}{% endfor %}
                 <div class="field">{{ xizmatlar.empty_form.turi }}</div>

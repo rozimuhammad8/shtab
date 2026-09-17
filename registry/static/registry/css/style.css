@@ -1033,6 +1033,76 @@ select {
 }
 
 /* ==========================================================================
+   Joyida tahrirlash (inline edit)
+
+   Sahifa bir vaqtda ikki holatni saqlaydi: `.ro` - ko'rish, `.rw` - forma
+   maydoni. `ui.js` formaga `.is-editing` klassini qo'shib almashtiradi.
+   ========================================================================== */
+
+.inline-edit .rw { display: none; }
+.inline-edit.is-editing .ro { display: none; }
+.inline-edit.is-editing .rw { display: block; }
+
+/* Tugmalar: qaysi holatda qaysi biri ko'rinadi */
+.inline-edit .faqat-tahrir { display: none; }
+.inline-edit.is-editing .faqat-korish { display: none; }
+.inline-edit.is-editing .faqat-tahrir { display: inline-flex; }
+.inline-edit.is-editing .saqlash-paneli.faqat-tahrir { display: flex; }
+
+/* Tahrirlash holatida jadval kataklari kengroq bo'ladi */
+.inline-edit.is-editing .detail-table th,
+.inline-edit.is-editing .detail-table td { padding-top: 11px; padding-bottom: 11px; }
+
+.inline-edit.is-editing .detail-table th { padding-top: 21px; }
+
+/* Sarlavhadagi F.I.O. maydoni - butun kenglikni egallaydi */
+.rw-title { display: none; }
+.inline-edit.is-editing .rw-title { display: block; }
+.rw-title input {
+    width: 100%;
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* Tahrirlash holatida sarlavha bloki kengayadi */
+.inline-edit.is-editing .page-head > div:first-child {
+    flex: 1 1 440px;
+    min-width: 0;
+}
+
+/* Tahrirlanadigan yozuv ekanini bildiruvchi ramka */
+.inline-edit.is-editing .panel {
+    border-color: var(--c-accent);
+    box-shadow: var(--sh-md), inset 0 0 0 1px var(--c-accent-soft);
+}
+
+/* Pastdagi "yopishqoq" saqlash paneli */
+.saqlash-paneli {
+    position: sticky;
+    bottom: 14px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    margin-top: 18px;
+    background: var(--c-glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 0.5px solid var(--c-accent);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-lg);
+}
+
+.saqlash-paneli .spacer { flex: 1; }
+
+@media (max-width: 640px) {
+    .saqlash-paneli { bottom: 0; border-radius: var(--r-md); }
+}
+
+/* ==========================================================================
    Ma'lumotnoma kartalari
    ========================================================================== */
 
@@ -1211,6 +1281,60 @@ select {
 .row-remove:active { transform: scale(.92); }
 .row-remove:hover { background: var(--c-no-bg); color: var(--c-no-text); border-color: var(--c-no-text); }
 .row-remove svg { width: 15px; height: 15px; }
+
+/* Ixcham ko'rinish: to'plam yarim kenglikdagi panel ichida turadi, shuning
+   uchun beshta ustun bitta satrga sig'maydi. Har bir yozuv uch satrga
+   bo'linadi, ustun sarlavhalari esa maydonlarning ustida chiqadi. */
+.formset-ixcham .formset-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px;
+    grid-template-areas:
+        "turi  turi   ochir"
+        "holat holat  ochir"
+        "soni  summa  ochir";
+    gap: 9px 10px;
+    padding: 13px;
+}
+
+/* Sarlavha bo'lmaganda yuqori burchaklarni birinchi qatorning o'zi
+   yumaloqlaydi (pastki burchaklar `:last-child` qoidasida). */
+.formset-ixcham .formset-row:first-child {
+    border-top-left-radius: calc(var(--r-md) - 1px);
+    border-top-right-radius: calc(var(--r-md) - 1px);
+}
+
+.formset-ixcham .f-turi  { grid-area: turi; }
+.formset-ixcham .f-holat { grid-area: holat; }
+.formset-ixcham .f-soni  { grid-area: soni; }
+.formset-ixcham .f-summa { grid-area: summa; }
+
+.formset-ixcham .f-ochir {
+    grid-area: ochir;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.formset-ixcham .field[data-ustun]::before {
+    content: attr(data-ustun);
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    color: var(--c-muted);
+}
+
+/* Bo'lim sarlavhasi va uning o'ng tomonidagi tugma bir qatorda */
+.bolim-sarlavha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 22px 0 10px;
+}
+.bolim-sarlavha h3 { margin: 0; }
 
 /* ==========================================================================
    Xabarlar (messages)

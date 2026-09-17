@@ -1,0 +1,30 @@
+{% comment %}
+Joyida tahrirlash uchun bitta forma maydoni.
+
+Faqat forma mavjud bo'lsa (ya'ni foydalanuvchi tizimga kirgan bo'lsa) chiqadi.
+`.rw` klassi tufayli maydon odatda yashirin turadi va sahifa tahrirlash
+holatiga o'tganda ko'rinadi.
+
+    {% include 'registry/partials/tahrir.html' with maydon=form.jshshir %}
+    {% include 'registry/partials/tahrir.html' with maydon=form.asosiy_arizachi belgi=1 %}
+
+`belgi=1` - belgilash oynachasi (checkbox) uchun: yorliq bilan birga chiqadi.
+{% endcomment %}
+{% if maydon %}
+<span class="rw{% if maydon.errors %} has-error{% endif %}">
+    {% if belgi %}
+        <label class="check">
+            {{ maydon }}
+            <span>{{ maydon.label }}</span>
+        </label>
+    {% else %}
+        {{ maydon }}
+    {% endif %}
+    {% for xato in maydon.errors %}
+    <p class="field-error">{{ xato }}</p>
+    {% endfor %}
+    {% if maydon.help_text %}
+    <p class="field-help">{{ maydon.help_text }}</p>
+    {% endif %}
+</span>
+{% endif %}

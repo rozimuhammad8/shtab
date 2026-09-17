@@ -71,6 +71,12 @@
         {% endfor %}
     </select>
 
+    <select name="muammo" data-select data-label="Muammo" aria-label="Muammo aniqlangan">
+        <option value="">Barchasi</option>
+        <option value="1" {% if soragi.muammo == "1" %}selected{% endif %}>Aniqlangan</option>
+        <option value="0" {% if soragi.muammo == "0" %}selected{% endif %}>Aniqlanmagan</option>
+    </select>
+
     <label class="check check-chip">
         <input type="checkbox" name="uchrashuv" value="1"
                {% if soragi.uchrashuv == "1" %}checked{% endif %}>
@@ -103,6 +109,7 @@
                 <th>Toifa</th>
                 <th>Uchrashuv</th>
                 <th>Xizmat</th>
+                <th>Muammo</th>
                 {% if user.is_authenticated %}<th></th>{% endif %}
             </tr>
         </thead>
@@ -134,6 +141,13 @@
                         <span class="badge badge-dot">Yo'q</span>
                     {% endif %}
                 </td>
+                <td>
+                    {% if s.muammo_aniqlangan %}
+                        <span class="badge badge-warn badge-dot">Ha</span>
+                    {% else %}
+                        <span class="badge badge-yes badge-dot">Yo'q</span>
+                    {% endif %}
+                </td>
                 {% if user.is_authenticated %}
                 <td class="cell-actions">
                     <a class="btn btn-ghost btn-sm" href="{% url 'registry:shaxs_update' s.pk %}">Tahrirlash</a>
@@ -142,7 +156,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="{% if user.is_authenticated %}9{% else %}8{% endif %}">
+                <td colspan="{% if user.is_authenticated %}10{% else %}9{% endif %}">
                     <div class="empty-state">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
                             <circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/>

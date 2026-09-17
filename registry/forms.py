@@ -42,9 +42,9 @@ class ShaxsForm(forms.ModelForm):
             'ijtimoiy_toifa', 'muammo_toifasi', 'reestrdan_chiqqan',
             'uchrashuv_sana', 'uchrashuvda_qatnashgan',
             'xizmat_sana', 'xizmat_korsatilgan',
-            'murojaat_sababi', 'murojaat_izohi',
+            'murojaat_sabablari',
             'ijtimoiy_holatlar',
-            'muammo_aniqlanmagan',
+            'muammo_aniqlangan',
         ]
         widgets = {
             'fio': forms.TextInput(attrs={
@@ -64,10 +64,9 @@ class ShaxsForm(forms.ModelForm):
             'oila': forms.Select(attrs={'data-select': ''}),
             'ijtimoiy_toifa': forms.Select(attrs={'data-select': ''}),
             'muammo_toifasi': forms.Select(attrs={'data-select': ''}),
-            'murojaat_sababi': forms.Select(attrs={'data-select': ''}),
-            'murojaat_izohi': forms.Textarea(attrs={
-                'rows': 3,
-                'placeholder': "Fuqaro nima so'ragan (masalan: uy-joy ta'miri)",
+            'murojaat_sabablari': forms.SelectMultiple(attrs={
+                'data-select': '',
+                'data-placeholder': 'Sabab tanlanmagan',
             }),
             'uchrashuv_sana': SanaInput(),
             'xizmat_sana': SanaInput(),
@@ -86,7 +85,6 @@ class ShaxsForm(forms.ModelForm):
         )
         self.fields['ijtimoiy_toifa'].empty_label = '— Toifa tanlanmagan —'
         self.fields['muammo_toifasi'].empty_label = '— Izoh tanlanmagan —'
-        self.fields['murojaat_sababi'].empty_label = '— Sabab tanlanmagan —'
 
         # Querysetlar aniq belgilanadi (ortiqcha so'rovlar bo'lmasligi uchun).
         self.fields['mahalla'].queryset = Mahalla.objects.select_related('hudud')
@@ -96,12 +94,17 @@ class ShaxsForm(forms.ModelForm):
             'tartib'
         )
 
-        # Faqat faol sabablar ko'rinadi; joriy yozuvda tanlangan sabab
+        # Faqat faol sabablar ko'rinadi; joriy yozuvda tanlangan sabablar
         # nofaol qilingan bo'lsa ham ro'yxatda qoladi (yo'qolib qolmasligi uchun).
         shart = Q(faol=True)
-        if self.instance.pk and self.instance.murojaat_sababi_id:
-            shart |= Q(pk=self.instance.murojaat_sababi_id)
-        self.fields['murojaat_sababi'].queryset = MurojaatSababi.objects.filter(shart)
+        if self.instance.pk:
+            shart |= Q(pk__in=self.instance.murojaat_sabablari.values('pk'))
+        self.fields['murojaat_sabablari'].queryset = (
+            MurojaatSababi.objects.filter(shart).distinct()
+        )
+        self.fields['murojaat_sabablari'].help_text = (
+            "Bir nechta sababni tanlash mumkin"
+        )
 
         # 4 000 dan ortiq oila bor - ro'yxatni joriy shaxsning mahallasi bilan
         # cheklaymiz, aks holda ochiluvchi ro'yxat ishlatib bo'lmas holga keladi.
@@ -170,12 +173,21 @@ class XizmatForm(forms.ModelForm):
     class Meta:
         model = Xizmat
         fields = ['turi', 'holat', 'soni', 'summa_mln']
+        # `aria-label`: ixcham ko'rinishda ustun sarlavhasi CSS orqali
+        # chiziladi, shuning uchun maydon nomi alohida beriladi.
         widgets = {
-            'turi': forms.Select(attrs={'data-select': ''}),
-            'holat': forms.Select(attrs={'data-select': ''}),
-            'soni': forms.NumberInput(attrs={'min': '1', 'step': '1'}),
+            'turi': forms.Select(attrs={
+                'data-select': '', 'aria-label': 'Xizmat turi',
+            }),
+            'holat': forms.Select(attrs={
+                'data-select': '', 'aria-label': 'Xizmat holati',
+            }),
+            'soni': forms.NumberInput(attrs={
+                'min': '1', 'step': '1', 'aria-label': 'Soni',
+            }),
             'summa_mln': forms.NumberInput(attrs={
                 'step': '0.001', 'min': '0', 'placeholder': '0.000',
+                'aria-label': "Summa (mln so'm)",
             }),
         }
 
@@ -193,6 +205,8 @@ class XizmatForm(forms.ModelForm):
         return self.cleaned_data.get('soni') or 1
 
 
+# Bir xil (turi, holat) juftligini ikki marta qo'shishni Django'ning o'zi
+# `validate_unique` orqali ushlaydi va tushunarli xabar beradi.
 XizmatFormSet = inlineformset_factory(
     Shaxs, Xizmat, form=XizmatForm, extra=0, can_delete=True,
 )

@@ -2,11 +2,12 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.deletion import ProtectedError
 from django.http import Http404, JsonResponse
-from django.shortcuts import redirect
+from django.contrib.auth.views import redirect_to_login
+from django.shortcuts import redirect, resolve_url
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import (
@@ -85,7 +86,7 @@ class ShaxsListView(ListView):
 
     def get_queryset(self):
         qs = Shaxs.objects.select_related(
-            'mahalla', 'oila', 'ijtimoiy_toifa', 'murojaat_sababi',
+            'mahalla', 'oila', 'ijtimoiy_toifa',
         )
 
         soragi = self.request.GET
@@ -106,11 +107,14 @@ class ShaxsListView(ListView):
         if holat_id := soragi.get('holat'):
             qs = qs.filter(ijtimoiy_holatlari__turi_id=holat_id)
         if sabab_id := soragi.get('sabab'):
-            qs = qs.filter(murojaat_sababi_id=sabab_id)
+            qs = qs.filter(murojaat_sabablari__id=sabab_id)
         if soragi.get('uchrashuv') == '1':
             qs = qs.filter(uchrashuvda_qatnashgan=True)
         if soragi.get('xizmat') == '1':
             qs = qs.filter(xizmat_korsatilgan=True)
+        # Uch holatli filtr: bo'sh = barchasi, '1' = ha, '0' = yo'q
+        if (muammo := soragi.get('muammo')) in ('0', '1'):
+            qs = qs.filter(muammo_aniqlangan=(muammo == '1'))
 
         return qs.order_by('fio')
 
@@ -130,6 +134,14 @@ class ShaxsListView(ListView):
 
 
 class ShaxsDetailView(DetailView):
+    """Shaxs kartochkasi - o'sha sahifada joyida tahrirlash bilan.
+
+    Sahifa odatda "ko'rish" holatida chiqadi. Tizimga kirgan foydalanuvchi
+    «Tahrirlash» tugmasini bosganda qiymatlar o'rniga forma maydonlari
+    ko'rinadi (sahifa qayta yuklanmaydi), «Saqlash» esa oddiy POST orqali
+    yozuvni saqlaydi.
+    """
+
     model = Shaxs
     template_name = 'registry/shaxs_detail.html'
     context_object_name = 'shaxs'
@@ -138,8 +150,8 @@ class ShaxsDetailView(DetailView):
     def get_queryset(self):
         return Shaxs.objects.select_related(
             'mahalla', 'mahalla__hudud', 'oila', 'ijtimoiy_toifa',
-            'muammo_toifasi', 'murojaat_sababi',
-        )
+            'muammo_toifasi',
+        ).prefetch_related('murojaat_sabablari')
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -160,7 +172,50 @@ class ShaxsDetailView(DetailView):
             .exclude(pk=self.object.pk)
             .order_by('-asosiy_arizachi', 'tartib_raqami')
         )
+        # Forma faqat tizimga kirganlar uchun yasaladi - mehmonlar uchun
+        # ortiqcha so'rovlar ketmasligi kerak.
+        if self.request.user.is_authenticated:
+            ctx.setdefault('form', ShaxsForm(instance=self.object))
+            ctx.setdefault(
+                'xizmat_formset', XizmatFormSet(instance=self.object),
+            )
         return ctx
+
+    def post(self, request, *args, **kwargs):
+        """«Saqlash» tugmasi - joyida tahrirlashni saqlaydi."""
+        if not request.user.is_authenticated:
+            return redirect_to_login(
+                request.get_full_path(), str(resolve_url(settings.LOGIN_URL)),
+            )
+
+        self.object = self.get_object()
+        form = ShaxsForm(request.POST, instance=self.object)
+        formset = XizmatFormSet(request.POST, instance=self.object)
+
+        if form.is_valid() and formset.is_valid():
+            try:
+                with transaction.atomic():
+                    self.object = form.save()
+                    formset.instance = self.object
+                    formset.save()
+            except IntegrityError:
+                # Masalan, sahifa ochiq turganda xizmat qatori boshqa joydan
+                # qo'shilgan bo'lsa - bazadagi unikallik cheklovi ishlaydi.
+                messages.error(
+                    request,
+                    "Saqlanmadi: bu yozuv sahifa ochiq turganda o'zgargan "
+                    "ko'rinadi. Sahifani yangilab, qaytadan urinib ko'ring.",
+                )
+            else:
+                messages.success(request, f"«{self.object.fio}» saqlandi.")
+                return redirect('registry:shaxs_detail', pk=self.object.pk)
+        else:
+            messages.error(request, "Saqlanmadi - formada xatolar bor.")
+        # Xato bo'lsa sahifa darhol tahrirlash holatida ochiladi.
+        return self.render_to_response(self.get_context_data(
+            object=self.object, form=form, xizmat_formset=formset,
+            tahrir_rejimi=True,
+        ))
 
 
 class MahallaListView(ListView):
@@ -241,10 +296,20 @@ class ShaxsFormMixin:
                 self.get_context_data(form=form, xizmatlar=formset)
             )
 
-        with transaction.atomic():
-            self.object = form.save()
-            formset.instance = self.object
-            formset.save()
+        try:
+            with transaction.atomic():
+                self.object = form.save()
+                formset.instance = self.object
+                formset.save()
+        except IntegrityError:
+            messages.error(
+                self.request,
+                "Saqlanmadi: bu yozuv sahifa ochiq turganda o'zgargan "
+                "ko'rinadi. Sahifani yangilab, qaytadan urinib ko'ring.",
+            )
+            return self.render_to_response(
+                self.get_context_data(form=form, xizmatlar=formset)
+            )
 
         messages.success(self.request, self.muvaffaqiyat_xabari % self.object.fio)
         return super(ShaxsFormMixin, self).form_valid(form)
