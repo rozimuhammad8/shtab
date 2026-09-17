@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Shtab ma'lumotlar bazasi{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'registry/css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="{% url 'registry:dashboard' %}" class="brand">
+                Shtab ma'lumotlar bazasi
+            </a>
+            <nav class="main-nav">
+                <a href="{% url 'registry:dashboard' %}">Bosh sahifa</a>
+                <a href="{% url 'registry:shaxs_list' %}">Shaxslar</a>
+                <a href="{% url 'registry:mahalla_list' %}">Mahallalar</a>
+                <a href="/admin/">Admin</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container page">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>Andijon tumani &middot; Aholi bandligi va kambag&#39;allikka barham berish shtabi</p>
+        </div>
+    </footer>
+</body>
+</html>

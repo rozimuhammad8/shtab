@@ -1,0 +1,25 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}Mahallalar &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<h1>Mahallalar (MFY) ro'yxati</h1>
+
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr><th>Nomi</th><th>Hudud</th><th>Kodi</th><th>Shaxslar soni</th></tr>
+        </thead>
+        <tbody>
+            {% for m in mahallalar %}
+            <tr>
+                <td><a href="{% url 'registry:mahalla_detail' m.pk %}">{{ m.nomi }}</a></td>
+                <td>{{ m.hudud }}</td>
+                <td>{{ m.kodi }}</td>
+                <td>{{ m.shaxslar_soni_ann }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

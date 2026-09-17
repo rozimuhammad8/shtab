@@ -1,0 +1,84 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}{{ shaxs.fio }} &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'registry:shaxs_list' %}">&larr; Ro'yxatga qaytish</a>
+
+<h1>{{ shaxs.fio }}</h1>
+
+<div class="two-col">
+    <section class="panel">
+        <h2>Shaxsiy ma'lumotlar</h2>
+        <table class="detail-table">
+            <tr><th>JSHSHIR</th><td>{{ shaxs.jshshir|default:"-" }}</td></tr>
+            <tr><th>Jinsi</th><td>{{ shaxs.jinsi }}</td></tr>
+            <tr><th>Tug'ilgan sana</th><td>{{ shaxs.tugilgan_sana|default:"-" }}</td></tr>
+            <tr><th>Yoshi</th><td>{{ shaxs.yoshi|floatformat:1 }}</td></tr>
+            <tr><th>Ijtimoiy toifa</th><td>{{ shaxs.ijtimoiy_toifa }}</td></tr>
+            <tr><th>Izoh</th><td>{{ shaxs.izoh|default:"-" }}</td></tr>
+            <tr><th>Asosiy arizachi</th><td>{{ shaxs.asosiy_arizachi|yesno:"Ha,Yo'q" }}</td></tr>
+            <tr><th>Mahalla</th>
+                <td><a href="{% url 'registry:mahalla_detail' shaxs.oila.mahalla.pk %}">{{ shaxs.oila.mahalla.nomi }}</a></td>
+            </tr>
+            <tr><th>Oila ID</th><td>{{ shaxs.oila.oila_unikal_id }}</td></tr>
+        </table>
+    </section>
+
+    <section class="panel">
+        <h2>Uchrashuv va xizmatlar</h2>
+        <table class="detail-table">
+            <tr><th>Uchrashuv sanasi</th><td>{{ shaxs.uchrashuv_sana|default:"-" }}</td></tr>
+            <tr><th>Uchrashuvda qatnashgan</th><td>{{ shaxs.uchrashuv_qatnashgan|yesno:"Ha,Yo'q" }}</td></tr>
+            <tr><th>Xizmat sanasi</th><td>{{ shaxs.xizmat_sana|default:"-" }}</td></tr>
+            <tr><th>Xizmat ko'rsatilgan</th><td>{{ shaxs.xizmat_qatnashgan|yesno:"Ha,Yo'q" }}</td></tr>
+        </table>
+
+        {% if shaxs.kerakli_xizmatlar %}
+        <h3>Kerakli xizmatlar</h3>
+        <ul class="badge-list">
+            {% for k, v in shaxs.kerakli_xizmatlar.items %}
+            <li><span class="badge badge-info">{{ k }}: {{ v }}</span></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if shaxs.korsatilgan_xizmatlar %}
+        <h3>Ko'rsatilgan xizmatlar</h3>
+        <ul class="badge-list">
+            {% for k, v in shaxs.korsatilgan_xizmatlar.items %}
+            <li><span class="badge badge-yes">{{ k }}: {{ v }}</span></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if shaxs.ijtimoiy_holat_belgilari %}
+        <h3>Ijtimoiy holat belgilari</h3>
+        <ul class="badge-list">
+            {% for k, v in shaxs.ijtimoiy_holat_belgilari.items %}
+            <li><span class="badge">{{ k }}</span></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+</div>
+
+{% if oila_azolari %}
+<section class="panel">
+    <h2>Oilaning boshqa a'zolari</h2>
+    <table class="data-table">
+        <thead><tr><th>F.I.O.</th><th>Jinsi</th><th>Yoshi</th><th>Toifa</th></tr></thead>
+        <tbody>
+            {% for a in oila_azolari %}
+            <tr>
+                <td><a href="{% url 'registry:shaxs_detail' a.pk %}">{{ a.fio }}</a></td>
+                <td>{{ a.jinsi }}</td>
+                <td>{{ a.yoshi|floatformat:1 }}</td>
+                <td>{{ a.ijtimoiy_toifa }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+{% endblock %}

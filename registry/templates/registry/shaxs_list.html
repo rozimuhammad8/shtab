@@ -1,0 +1,89 @@
+{% extends 'registry/base.html' %}
+
+{% block title %}Shaxslar &middot; Shtab ma'lumotlar bazasi{% endblock %}
+
+{% block content %}
+<h1>Shaxslar ro'yxati</h1>
+
+<form method="get" class="filter-form">
+    <input
+        type="text" name="q" placeholder="F.I.O. yoki JSHSHIR bo'yicha qidirish"
+        value="{{ soragi.q }}">
+
+    <select name="mahalla">
+        <option value="">-- Barcha mahallalar --</option>
+        {% for m in mahallalar %}
+        <option value="{{ m.pk }}" {% if soragi.mahalla == m.pk|stringformat:"s" %}selected{% endif %}>
+            {{ m.nomi }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <select name="toifa">
+        <option value="">-- Barcha toifalar --</option>
+        {% for t in toifalar %}
+        <option value="{{ t }}" {% if soragi.toifa == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="jinsi">
+        <option value="">-- Jinsi --</option>
+        <option value="Эркак" {% if soragi.jinsi == "Эркак" %}selected{% endif %}>Erkak</option>
+        <option value="Аёл" {% if soragi.jinsi == "Аёл" %}selected{% endif %}>Ayol</option>
+    </select>
+
+    <button type="submit">Qidirish</button>
+    <a class="btn-secondary" href="{% url 'registry:shaxs_list' %}">Tozalash</a>
+</form>
+
+<p class="results-count">Jami natija: {{ paginator.count }} ta</p>
+
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>F.I.O.</th>
+                <th>JSHSHIR</th>
+                <th>Jinsi</th>
+                <th>Yoshi</th>
+                <th>Mahalla</th>
+                <th>Toifa</th>
+                <th>Uchrashuv</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in shaxslar %}
+            <tr>
+                <td><a href="{% url 'registry:shaxs_detail' s.pk %}">{{ s.fio }}</a></td>
+                <td>{{ s.jshshir|default:"-" }}</td>
+                <td>{{ s.jinsi }}</td>
+                <td>{{ s.yoshi|floatformat:1 }}</td>
+                <td>{{ s.oila.mahalla.nomi }}</td>
+                <td>{{ s.ijtimoiy_toifa }}</td>
+                <td>
+                    {% if s.uchrashuv_qatnashgan %}
+                        <span class="badge badge-yes">Ha</span>
+                    {% else %}
+                        <span class="badge badge-no">Yo'q</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7">Natija topilmadi.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+<nav class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?{% if soragi.q %}q={{ soragi.q }}&{% endif %}{% if soragi.mahalla %}mahalla={{ soragi.mahalla }}&{% endif %}{% if soragi.toifa %}toifa={{ soragi.toifa }}&{% endif %}{% if soragi.jinsi %}jinsi={{ soragi.jinsi }}&{% endif %}page={{ page_obj.previous_page_number }}">&larr; Oldingi</a>
+    {% endif %}
+    <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?{% if soragi.q %}q={{ soragi.q }}&{% endif %}{% if soragi.mahalla %}mahalla={{ soragi.mahalla }}&{% endif %}{% if soragi.toifa %}toifa={{ soragi.toifa }}&{% endif %}{% if soragi.jinsi %}jinsi={{ soragi.jinsi }}&{% endif %}page={{ page_obj.next_page_number }}">Keyingi &rarr;</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}
